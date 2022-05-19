@@ -1,0 +1,3 @@
+add_library(LibSimulator PE.cpp)
+
+target_include_directories(LibSimulator PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
