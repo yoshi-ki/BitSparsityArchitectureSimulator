@@ -19,8 +19,8 @@ namespace simulator
   int num_PE_parallel = 16; // PE consumes 16 bits at one time
 
   PEArray::PEArray(
-    std::vector<std::vector<std::int8_t>>& inputMemories,
-    std::vector<std::vector<std::int8_t>>& weightMemories,
+    std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& inputMemories,
+    std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& weightMemories,
     int kernel_height,
     int kernel_width,
     int input_height,
@@ -30,7 +30,7 @@ namespace simulator
   {
     // convert input activation and weight to the bit format,
     // because we only need bit format value
-    convertMemoriesToBitFifos(inputMemories, weightMemories, bitInputFifos, bitWeightFifos);
+    convertMemoriesToBitFifos(inputMemories, weightMemories, this.bitInputFifos, bitWeightFifos);
   }
 
   bool PEArray::execute_one_step()
@@ -50,10 +50,17 @@ namespace simulator
   }
 
   void PEArray::convertMemoriesToBitFifos(
-    std::vector<std::vector<std::int8_t>> inputMemories,
-    std::vector<std::vector<std::int8_t>> weightMemories,
-    std::vector<std::queue<std::uint8_t>> bitInputFifos,
-    std::vector<std::queue<std::uint8_t>> bitWeightFifos
+    std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& inputMemories,
+    std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& weightMemories,
+    std::vector<std::queue<std::uint8_t>>& bitInputFifos,
+    std::vector<std::queue<std::uint8_t>>& bitWeightFifos,
+    int input_channel_group,
+    int input_height,
+    int input_width,
+    int kernel_height,
+    int kernel_width,
+    int stride,
+    int num_output_channel
   )
   {
     // intermediate values
@@ -61,37 +68,42 @@ namespace simulator
     std::vector<std::vector<std::queue<std::int8_t>>> weightValuesFifos(num_PE_height, std::vector<std::queue<std::int8_t>>(num_PE_parallel));
 
     // by using the layer config, we will consume the values
+    convertInputMemoriesToFifos(inputMemories, inputValuesFifos, input_channel_group, input_height, input_width, kernel_height, kernel_width, stride);
+    convertWeightMemoriesToFifos(weightMemories, weightValuesFifos, input_channel_group, input_height, input_width, kernel_height, kernel_width, stride, num_output_channel);
 
     // convert to bit
-    for (int i = 0; i < inputValuesFifos.size(); i++){
-      convertValuesFifoToBitFifo(inputValuesFifos[i], bitInputFifos[i]);
-    }
-    for (int i = 0; i < weightValuesFifos.size(); i++){
-      convertValuesFifoToBitFifo(weightValuesFifos[i], bitWeightFifos[i]);
-    }
+    convertValuesFifosToBitFifos(inputValuesFifos, bitInputFifos);
+    convertValuesFifosToBitFifos(weightValuesFifos, bitWeightFifos);
   }
 
   // private function to help converting
-  void PEArray::convertValuesFifoToBitFifo(
-    std::queue<std::int8_t> valueFifo,
-    std::queue<std::uint8_t> bitFifo
+  void PEArray::convertValuesFifosToBitFifos(
+    std::vector<std::vector<std::queue<std::int8_t>>>& valuesFifos,
+    std::vector<std::vector<std::queue<std::uint8_t>>>& bitFifos
   )
   {
-    while(!valueFifo.empty()){
-      int8_t val = valueFifo.front();
-      valueFifo.pop();
-      for (int i = 7; i >= 0; i--){
-        int mask = 1 << i;
-        if((val & mask) > 0){
-          bitFifo.push((std::uint8_t)i);
+    for (int fifoIndex = 0; fifoIndex < valuesFifos.size(); fifoIndex++){
+      for (int input_channel = 0; input_channel < num_PE_parallel; input_channel++){
+        while (!valuesFifos.empty())
+        {
+          int8_t val = valuesFifos[fifoIndex][input_channel].front();
+          valuesFifos[fifoIndex][input_channel].pop();
+          for (int i = 7; i >= 0; i--)
+          {
+            int mask = 1 << i;
+            if ((val & mask) > 0)
+            {
+              bitFifos[fifoIndex][input_channel].push((std::uint8_t)i);
+            }
+          }
         }
       }
     }
   }
 
   void PEArray::convertInputMemoriesToFifos(
-    std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>> inputMemories,
-    std::vector<std::vector<std::queue<std::int8_t>>> inputValuesFifos,
+    std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& inputMemories,
+    std::vector<std::vector<std::queue<std::int8_t>>>& inputValuesFifos,
     int input_channel_group,
     int input_height,
     int input_width,
@@ -124,8 +136,8 @@ namespace simulator
   }
 
   void PEArray::convertWeightMemoriesToFifos(
-    std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>> weightMemories,
-    std::vector<std::vector<std::queue<std::int8_t>>> weightValuesFifos,
+    std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& weightMemories,
+    std::vector<std::vector<std::queue<std::int8_t>>>& weightValuesFifos,
     int input_channel_group,
     int input_height,
     int input_width,
