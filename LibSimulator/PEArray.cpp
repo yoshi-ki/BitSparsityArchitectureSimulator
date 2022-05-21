@@ -90,14 +90,14 @@ namespace simulator
   }
 
   void PEArray::convertInputMemoriesToFifos(
-    std::vector<std::int8_t> inputMemories,
-    std::queue<std::int8_t> inputValuesFifos,
+    std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>> inputMemories,
+    std::vector<std::vector<std::queue<std::int8_t>>> inputValuesFifos,
     int input_channel_group,
     int input_height,
     int input_width,
     int kernel_height,
     int kernel_width,
-    int stride,
+    int stride
   )
   {
     for (int memoryIndex = 0; memoryIndex < inputMemories.size(); memoryIndex++){
@@ -111,7 +111,10 @@ namespace simulator
             for (int kh = 0; kh < kernel_height; kh++){
               for (int kw = 0; kw < kernel_width; kw++){
                 // input
-                inputValuesFifos[memoryIndex].push([memoryIndex][channelGroup][windowStartHeight + kernel_height][windowStartWidth + kernel_width]);
+                for (int input_channel = 0; input_channel < num_PE_parallel; input_channel++){
+                  inputValuesFifos[memoryIndex][input_channel].push(\
+                    inputMemories[memoryIndex][channelGroup][windowStartHeight + kernel_height][windowStartWidth + kernel_width][input_channel]);
+                }
               }
             }
           }
@@ -120,5 +123,39 @@ namespace simulator
     }
   }
 
+  void PEArray::convertWeightMemoriesToFifos(
+    std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>> weightMemories,
+    std::vector<std::vector<std::queue<std::int8_t>>> weightValuesFifos,
+    int input_channel_group,
+    int input_height,
+    int input_width,
+    int kernel_height,
+    int kernel_width,
+    int stride,
+    int num_output_channel
+  )
+  {
+    for (int output_channel = 0; output_channel < num_output_channel; output_channel++){
+      int memoryIndex = output_channel % 8;
+      int partialInputHeight = (memoryIndex == 0 || memoryIndex == 3) ? input_height / 2 + input_height % 2 : input_height / 2;
+      int partialInputWidth = (memoryIndex == 0 || memoryIndex == 2) ? input_width / 2 + input_width % 2 : input_width / 2;
+      for (int channelGroup = 0; channelGroup < input_channel_group; channelGroup++){
+        // start position of window
+        for (int windowStartHeight = 0; windowStartHeight < partialInputHeight - kernel_height + 1; windowStartHeight++){
+          for (int windowStartWidth = 0; windowStartWidth < partialInputWidth - kernel_width + 1; windowStartWidth++){
+            for (int kh = 0; kh < kernel_height; kh++){
+              for (int kw = 0; kw < kernel_width; kw++){
+                // input
+                for (int input_channel = 0; input_channel < num_PE_parallel; input_channel++){
+                  weightValuesFifos[memoryIndex][input_channel].push(
+                    weightMemories[memoryIndex][channelGroup][windowStartHeight + kernel_height][windowStartWidth + kernel_width][input_channel]);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 
 }

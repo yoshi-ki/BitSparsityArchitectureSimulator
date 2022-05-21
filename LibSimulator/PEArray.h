@@ -36,11 +36,27 @@ namespace simulator
         std::vector<std::queue<std::int8_t>> weightValuesFifos
       );
 
-      void convertMemoriesToValueFifos(
-        std::vector<std::vector<std::int8_t>> inputMemories,
-        std::vector<std::vector<std::int8_t>> weightMemories,
-        std::vector<std::queue<std::uint8_t>> bitInputFifos,
-        std::vector<std::queue<std::uint8_t>> bitWeightFifos
+      void convertInputMemoriesToFifos(
+        std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>> inputMemories,
+        std::vector<std::vector<std::queue<std::int8_t>>> inputValuesFifos,
+        int input_channel_group,
+        int input_height,
+        int input_width,
+        int kernel_height,
+        int kernel_width,
+        int stride
+      );
+
+      void convertWeightMemoriesToFifos(
+        std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>> weightMemories,
+        std::vector<std::vector<std::queue<std::int8_t>>> weightValuesFifos,
+        int input_channel_group,
+        int input_height,
+        int input_width,
+        int kernel_height,
+        int kernel_width,
+        int stride,
+        int num_output_channel
       );
 
       void convertValuesFifoToBitFifo(
