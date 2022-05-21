@@ -13,8 +13,8 @@ namespace simulator
   outputPE PE::execute_one_step(
     std::vector<unsigned int>& bitActivations,
     std::vector<unsigned int>& bitWeights,
-    bool activationEnd,
-    bool weightEnd
+    std::vector<bool>& activationEnd,
+    std::vector<bool>& weightEnd
   )
   {
     // there are two states of the PE,
@@ -33,7 +33,9 @@ namespace simulator
     }
 
     // state transition
-    if (activationEnd && weightEnd){
+    if (std::all_of(activationEnd.begin(), activationEnd.end(), [](bool x) { return x; } ) &&
+        std::all_of(weightEnd.begin(), weightEnd.end(), [](bool x) { return x; } ))
+    {
       state = 1;
       endComputation = true;
     }

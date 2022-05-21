@@ -18,12 +18,17 @@ namespace simulator::tests
     // 1 step
     auto a = std::vector<unsigned int>{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     auto b = std::vector<unsigned int>{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    pe.execute_one_step(a, b, false, false);
+    std::vector<bool>a1(16);
+    std::vector<bool>b1(16);
+    pe.execute_one_step(a, b, a1, b1);
 
     // 2 step
     auto c = std::vector<unsigned int>{1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1};
     auto d = std::vector<unsigned int>{1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1};
-    pe.execute_one_step(c, d, false, false);
+    std::vector<bool>c1(16);
+    std::vector<bool>d1(16);
+    d1[0] = true;
+    pe.execute_one_step(c, d, c1, d1);
     ASSERT_THAT(pe.get_psum(), Eq(44));
   }
 

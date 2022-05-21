@@ -21,8 +21,8 @@ namespace simulator
       outputPE execute_one_step(
         std::vector<unsigned int>& bitActivations,
         std::vector<unsigned int>& bitWeights,
-        bool activationEnd,
-        bool weightEnd
+        std::vector<bool>& activationEnd,
+        std::vector<bool>& weightEnd
       );
 
       // for test and mock
