@@ -1,12 +1,18 @@
 #pragma once
 #include <vector>
-#include <queue>
+#include <deque>
 
 namespace simulator
 {
   struct PEControllerStatus{
     std::vector<bool> isWaiting;
     std::vector<int> nextProcessIndex;
+    std::vector<bool> finishedPSum;
+  };
+
+  struct FIFOValues{
+    std::int8_t value;
+    bool isLast;
   };
 
   class PEArray
@@ -37,8 +43,8 @@ namespace simulator
       std::vector<std::vector<std::int8_t>> outputMemories;
 
       // value fifos
-      std::vector<std::vector<std::queue<std::int8_t>>> inputValuesFifos;
-      std::vector<std::vector<std::queue<std::int8_t>>> weightValuesFifos;
+      std::vector<std::vector<std::deque<FIFOValues>>> inputValuesFifos;
+      std::vector<std::vector<std::deque<FIFOValues>>> weightValuesFifos;
 
       // bit fifos
       std::vector<std::vector<std::vector<std::uint8_t>>> bitInputs;
@@ -56,23 +62,9 @@ namespace simulator
       bool busy;
 
     private:
-      void convertMemoriesToBitFifos(
-        std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& inputMemories,
-        std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& weightMemories,
-        std::vector<std::vector<std::queue<std::uint8_t>>>& inputValuesFifos,
-        std::vector<std::vector<std::queue<std::uint8_t>>>& weightValuesFifos,
-        int num_input_channel_group,
-        int input_height,
-        int input_width,
-        int kernel_height,
-        int kernel_width,
-        int stride,
-        int num_output_channel
-      );
-
       void convertInputMemoriesToFifos(
         std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& inputMemories,
-        std::vector<std::vector<std::queue<std::int8_t>>>& inputValuesFifos,
+        std::vector<std::vector<std::deque<FIFOValues>>>& inputValuesFifos,
         int num_input_channel_group,
         int input_height,
         int input_width,
@@ -83,7 +75,7 @@ namespace simulator
 
       void convertWeightMemoriesToFifos(
         std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& weightMemories,
-        std::vector<std::vector<std::queue<std::int8_t>>>& weightValuesFifos,
+        std::vector<std::vector<std::deque<FIFOValues>>>& weightValuesFifos,
         int num_input_channel_group,
         int input_height,
         int input_width,
@@ -93,18 +85,18 @@ namespace simulator
         int num_output_channel
       );
 
-      void convertValuesFifosToBitFifos(
-        std::vector<std::vector<std::queue<std::int8_t>>>& valuesFifos,
-        std::vector<std::vector<std::queue<std::uint8_t>>>& bitFifos
+      bool PEArray::isLayerFinished(
+        std::vector<std::vector<std::deque<FIFOValues>>>& inputFifos,
+        std::vector<std::vector<std::deque<FIFOValues>>>& weightFifos
       );
 
-      bool PEArray::isLayerFinished(
-        std::vector<std::vector<std::queue<std::int8_t>>>& inputFifos,
-        std::vector<std::vector<std::queue<std::int8_t>>>& weightFifos
+      bool PEArray::isFinishedPSumExecution(
+        std::vector<PEControllerStatus> inputControllerStatusForPEs,
+        std::vector<PEControllerStatus> weightControllerStatusForPEs
       );
 
       void PEArray::decodeValuesToBits(
-        std::vector<std::vector<std::queue<std::int8_t>>> &valueFifos,
+        std::vector<std::vector<std::deque<FIFOValues>>> &valueFifos,
         std::vector<std::vector<std::vector<std::uint8_t>>> bitRepresentations
       );
 
@@ -112,6 +104,22 @@ namespace simulator
         std::vector<std::vector<std::vector<std::uint8_t>>>& bitRepresentations,
         std::vector<PEControllerStatus>& controllerStatusForPEs,
         std::vector<std::vector<unsigned int>>& representationsForPEs
+      );
+
+      void PEArray::updatePEStatus(
+        std::vector<PEControllerStatus> &inputControllerStatusForPEs,
+        std::vector<PEControllerStatus> &weightControllerStatusForPEs,
+        std::vector<std::vector<std::deque<FIFOValues>>> &inputValuesFifos,
+        std::vector<std::vector<std::deque<FIFOValues>>> &weightValuesFifos,
+        std::vector<std::vector<std::vector<std::uint8_t>>> &bitInputs,
+        std::vector<std::vector<std::vector<std::uint8_t>>> &bitWeights
+      );
+
+      void PEArray::updatePEStatusWhenPsumFinish(
+        std::vector<PEControllerStatus> & inputControllerStatusForPEs,
+        std::vector<PEControllerStatus> & weightControllerStatusForPEs,
+        std::vector<std::vector<std::deque<FIFOValues>>> & inputValuesFifos,
+        std::vector<std::vector<std::deque<FIFOValues>>> & weightValuesFifos
       );
   };
 }
