@@ -4,6 +4,11 @@
 
 namespace simulator
 {
+  struct PEControllerStatus{
+    bool isWaitingNextValue;
+    std::vector<int> nextProcessIndex;
+  };
+
   class PEArray
   {
     public:
@@ -40,10 +45,12 @@ namespace simulator
       std::vector<std::vector<std::vector<std::uint8_t>>> bitWeights;
 
       // states to control PEs
-      std::vector<bool> isInputFifoWaiting;
-      std::vector<bool> isWeightFifoWaiting;
-      std::vector<int> indexInputBit;
-      std::vector<int> indexWeightBit;
+      // std::vector<bool> isInputFifoWaiting;
+      // std::vector<bool> isWeightFifoWaiting;
+      // std::vector<int> indexInputBit;
+      // std::vector<int> indexWeightBit;
+      std::vector<PEControllerStatus> inputControllerStatusForPEs;
+      std::vector<PEControllerStatus> weightControllerStatusForPEs;
 
       // busy or not, by this information, memory decides whether it sends data or not
       bool busy;
@@ -99,6 +106,12 @@ namespace simulator
       void PEArray::decodeValuesToBits(
         std::vector<std::vector<std::queue<std::int8_t>>> &valueFifos,
         std::vector<std::vector<std::vector<std::uint8_t>>> bitRepresentations
+      );
+
+      void PEArray::createInputForPEsBasedOnControllerStatus(
+        std::vector<std::vector<std::vector<std::uint8_t>>>& bitRepresentations,
+        std::vector<PEControllerStatus>& controllerStatusForPEs,
+        std::vector<std::vector<unsigned int>>& representationsForPEs
       );
   };
 }

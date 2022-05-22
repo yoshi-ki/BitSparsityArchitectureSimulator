@@ -25,9 +25,8 @@ namespace simulator
     int num_output_channel
   )
   {
-    busy = false;
-    // std::vector<std::vector<std::queue<std::int8_t>>> inputValuesFifos(num_PE_width, std::vector<std::queue<std::int8_t>>(num_PE_parallel));
-    // std::vector<std::vector<std::queue<std::int8_t>>> weightValuesFifos(num_PE_height, std::vector<std::queue<std::int8_t>>(num_PE_parallel));
+    busy = true;
+
     inputValuesFifos = std::vector<std::vector<std::queue<std::int8_t>>>(num_PE_width, std::vector<std::queue<std::int8_t>>(num_PE_parallel));
     weightValuesFifos = std::vector<std::vector<std::queue<std::int8_t>>> (num_PE_height, std::vector<std::queue<std::int8_t>>(num_PE_parallel));
 
@@ -37,10 +36,8 @@ namespace simulator
     convertWeightMemoriesToFifos(weightMemories, weightValuesFifos, num_input_channel_group, input_height, input_width, kernel_height, kernel_width, stride, num_output_channel);
 
     // states to control PEs
-    isInputFifoWaiting = std::vector<bool>(num_PE_width);
-    isWeightFifoWaiting = std::vector<bool>(num_PE_height);
-    indexInputBit = std::vector<int>(num_PE_width);
-    indexWeightBit = std::vector<int>(num_PE_height);
+    inputControllerStatusForPEs = std::vector<PEControllerStatus>(num_PE_width);
+    weightControllerStatusForPEs = std::vector<PEControllerStatus>(num_PE_height);
 
     // Fifos that correspond to each PEs
     bitInputs = std::vector<std::vector<std::vector<std::uint8_t>>>(num_PE_width, std::vector<std::vector<std::uint8_t>>(num_PE_parallel));
@@ -55,17 +52,25 @@ namespace simulator
       return busy;
     }
 
-    // decode values
+    // decode values (this circuit always run) (just look at the first element and do not change fifo)
     decodeValuesToBits(inputValuesFifos, bitInputs);
     decodeValuesToBits(weightValuesFifos, bitWeights);
+
+    // based on the PE controller status, prepare input for PEs
+    auto inputsForPEs = std::vector<std::vector<unsigned int>>(num_PE_width, std::vector<unsigned int>(num_PE_parallel));
+    auto weightsForPEs = std::vector<std::vector<unsigned int>>(num_PE_height, std::vector<unsigned int>(num_PE_parallel));
+    createInputForPEsBasedOnControllerStatus(bitInputs, inputControllerStatusForPEs, inputsForPEs);
+    createInputForPEsBasedOnControllerStatus(bitWeights, weightControllerStatusForPEs, weightsForPEs);
 
     // we use
     std::vector<std::vector<outputPE>> outputOfPEs(num_PE_height, std::vector<outputPE>(num_PE_width));
     for (int h = 0; h < num_PE_height; h++){
       for (int w = 0; w < num_PE_width; w++){
-        outputOfPEs[h][w] = PEs[h][w].execute_one_step(bitInputFifos[w], bitWeightFifos[h]);
+        outputOfPEs[h][w] = PEs[h][w].execute_one_step(inputsForPEs[w], weightsForPEs[h]);
       }
     }
+
+    // update pe status
 
     // for mock of step 1, we write output if all PEs finish
     if (std::all_of(outputOfPEs.begin(), outputOfPEs.end(), [](std::vector<outputPE> x) { return std::all_of(x.begin(), x.end(), [](bool x) {return x;}); } ))
@@ -107,24 +112,41 @@ namespace simulator
   {
     for (int fifoIndex = 0; fifoIndex < valueFifos.size(); fifoIndex++){
       for (int input_channel = 0; input_channel < num_PE_parallel; input_channel++){
-        while (!valueFifos.empty())
+        int8_t val = valueFifos[fifoIndex][input_channel].front();
+        int bitVectorIndex = 0;
+        for (int i = 7; i >= 0; i--)
         {
-          int8_t val = valueFifos[fifoIndex][input_channel].front();
-          valueFifos[fifoIndex][input_channel].pop();
-          int bitVectorIndex = 0;
-          for (int i = 7; i >= 0; i--)
+          int mask = 1 << i;
+          if ((val & mask) > 0)
           {
-            int mask = 1 << i;
-            if ((val & mask) > 0)
-            {
-              bitRepresentations[fifoIndex][input_channel][bitVectorIndex] = (std::uint8_t)i;
-              bitVectorIndex++;
-            }
+            bitRepresentations[fifoIndex][input_channel][bitVectorIndex] = (std::uint8_t)i;
+            bitVectorIndex++;
           }
         }
       }
     }
   }
+
+  void PEArray::createInputForPEsBasedOnControllerStatus(
+    std::vector<std::vector<std::vector<std::uint8_t>>>& bitRepresentations,
+    std::vector<PEControllerStatus>& controllerStatusForPEs,
+    std::vector<std::vector<unsigned int>>& representationsForPEs
+  )
+  {
+    for (int fifoIndex = 0; fifoIndex < num_PE_width; fifoIndex++){
+      auto controllerStatus = controllerStatusForPEs[fifoIndex];
+      for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
+        if(controllerStatus.isWaitingNextValue){
+          // when waiting for next value
+          representationsForPEs[fifoIndex][bitIndex] = 0;
+        }
+        else{
+          representationsForPEs[fifoIndex][bitIndex] =
+              (unsigned int)bitRepresentations[fifoIndex][bitIndex][controllerStatus.nextProcessIndex[bitIndex]];
+        }
+      }
+    }
+  };
 
   void PEArray::convertMemoriesToBitFifos(
     std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& inputMemories,
