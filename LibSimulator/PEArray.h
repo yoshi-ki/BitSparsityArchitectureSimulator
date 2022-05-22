@@ -5,7 +5,7 @@
 namespace simulator
 {
   struct PEControllerStatus{
-    bool isWaitingNextValue;
+    std::vector<bool> isWaiting;
     std::vector<int> nextProcessIndex;
   };
 

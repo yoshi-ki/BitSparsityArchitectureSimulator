@@ -71,9 +71,11 @@ namespace simulator
     }
 
     // update pe status
+    // TODO: need to add layer psum end information
+    updatePEStatus(inputControllerStatusForPEs, weightControllerStatusForPEs, inputValuesFifos, weightValuesFifos, bitInputs, bitWeights);
 
     // for mock of step 1, we write output if all PEs finish
-    if (std::all_of(outputOfPEs.begin(), outputOfPEs.end(), [](std::vector<outputPE> x) { return std::all_of(x.begin(), x.end(), [](bool x) {return x;}); } ))
+    if (finishedpsumExecution)
     {
       // write to output of PE to the corresponding output position
 
@@ -136,7 +138,7 @@ namespace simulator
     for (int fifoIndex = 0; fifoIndex < num_PE_width; fifoIndex++){
       auto controllerStatus = controllerStatusForPEs[fifoIndex];
       for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
-        if(controllerStatus.isWaitingNextValue){
+        if(controllerStatus.isWaiting[bitIndex]){
           // when waiting for next value
           representationsForPEs[fifoIndex][bitIndex] = 0;
         }
@@ -146,6 +148,89 @@ namespace simulator
         }
       }
     }
+  };
+
+  void PEArray::updatePEStatus(
+    std::vector<PEControllerStatus>& inputControllerStatusForPEs,
+    std::vector<PEControllerStatus>& weightControllerStatusForPEs,
+    std::vector<std::vector<std::queue<std::int8_t>>>& inputValuesFifos,
+    std::vector<std::vector<std::queue<std::int8_t>>>& weightValuesFifos,
+    std::vector<std::vector<std::vector<std::uint8_t>>>& bitInputs,
+    std::vector<std::vector<std::vector<std::uint8_t>>>& bitWeights
+  )
+  {
+    auto newInputControllerStatusForPEs = std::vector<PEControllerStatus>(num_PE_width);
+    auto newWeightControllerStatusForPEs = std::vector<PEControllerStatus>(num_PE_height);
+
+    // create new input controller status
+    for (int fifoIndex = 0; fifoIndex < num_PE_width; fifoIndex++){
+      for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
+        int nextProcessIndex = inputControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex] + 1;
+        newInputControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex] = nextProcessIndex;
+        newInputControllerStatusForPEs[fifoIndex].isWaiting[bitIndex] = nextProcessIndex < bitInputs[fifoIndex][bitIndex].size();
+      }
+    }
+
+    // create new weight controller status
+    for (int fifoIndex = 0; fifoIndex < num_PE_height; fifoIndex++){
+      for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
+        bool weightForThisBitNext = true;
+        for (int inputFifoIndex = 0; inputFifoIndex < num_PE_width; inputFifoIndex++)
+        {
+          weightForThisBitNext = weightForThisBitNext && newInputControllerStatusForPEs[inputFifoIndex].isWaiting[bitIndex];
+        }
+        if (weightForThisBitNext){
+          // we will consume weight next bit from the next cycle
+          int nextProcessIndex = weightControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex] + 1;
+          newWeightControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex] = nextProcessIndex;
+
+          bool weightFifoWaiting = nextProcessIndex >= bitWeights[fifoIndex][bitIndex].size();
+          newWeightControllerStatusForPEs[fifoIndex].isWaiting[bitIndex] = weightFifoWaiting;
+
+          // we need to update the status for input controller if new weight bit is produced
+          if (!weightFifoWaiting){
+            for (int inputFifoIndex = 0; inputFifoIndex < num_PE_width; inputFifoIndex++)
+            {
+              newInputControllerStatusForPEs[inputFifoIndex].isWaiting[bitIndex] = false;
+              newInputControllerStatusForPEs[inputFifoIndex].nextProcessIndex[bitIndex] = 0;
+            }
+          }
+        }
+      }
+    }
+
+    // decide we will update the fifo or not
+    bool finishedLayerExecution = false;
+    for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
+      bool updateFifo = true;
+      for (int weightFifoIndex = 0; weightFifoIndex < num_PE_height; weightFifoIndex++)
+      {
+        updateFifo = updateFifo && newWeightControllerStatusForPEs[weightFifoIndex].isWaiting[bitIndex];
+      }
+
+      if(updateFifo){
+        for (int weightFifoIndex = 0; weightFifoIndex < num_PE_height; weightFifoIndex++)
+        {
+          if (!weightValuesFifos[weightFifoIndex][bitIndex].empty()){
+            weightValuesFifos[weightFifoIndex][bitIndex].pop();
+            newWeightControllerStatusForPEs[weightFifoIndex].isWaiting[bitIndex] = false;
+            newWeightControllerStatusForPEs[weightFifoIndex].nextProcessIndex[bitIndex] = 0;
+          }
+        }
+        for (int inputFifoIndex = 0; inputFifoIndex < num_PE_width; inputFifoIndex++){
+          if (!inputValuesFifos[inputFifoIndex][bitIndex].empty()){
+            inputValuesFifos[inputFifoIndex][bitIndex].pop();
+            newInputControllerStatusForPEs[inputFifoIndex].isWaiting[bitIndex] = false;
+            newInputControllerStatusForPEs[inputFifoIndex].nextProcessIndex[bitIndex] = 0;
+          }
+        }
+      }
+    }
+
+    inputControllerStatusForPEs = newInputControllerStatusForPEs;
+    weightControllerStatusForPEs = newWeightControllerStatusForPEs;
+
+    return ;
   };
 
   void PEArray::convertMemoriesToBitFifos(
