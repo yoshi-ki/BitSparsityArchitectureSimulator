@@ -16,6 +16,7 @@ namespace simulator
   PEArray::PEArray(
     std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& inputMemories,
     std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& weightMemories,
+    std::vector<std::vector<std::vector<int>>>& outputMemoryIn,
     int num_input_channel_group,
     int input_height,
     int input_width,
@@ -26,6 +27,9 @@ namespace simulator
   )
   {
     busy = true;
+
+    outputStatus = 0;
+    outputMemory = outputMemoryIn;
 
     inputValuesFifos = std::vector<std::vector<std::deque<FIFOValues>>>(num_PE_width, std::vector<std::deque<FIFOValues>>(num_PE_parallel));
     weightValuesFifos = std::vector<std::vector<std::deque<FIFOValues>>> (num_PE_height, std::vector<std::deque<FIFOValues>>(num_PE_parallel));
@@ -71,7 +75,6 @@ namespace simulator
     }
 
     // update pe status
-    // TODO: need to add layer psum end information
     updatePEStatus(inputControllerStatusForPEs, weightControllerStatusForPEs, inputValuesFifos, weightValuesFifos, bitInputs, bitWeights);
 
     bool finishedPsumExecution = isFinishedPSumExecution(inputControllerStatusForPEs, weightControllerStatusForPEs);
@@ -79,7 +82,11 @@ namespace simulator
     // for mock of step 1, we write output if all PEs finish
     if (finishedPsumExecution)
     {
+      // TODO: write output to the corresponding position
+      // TODO: something wired might happen when 0 input
       // write the output of PEs to the corresponding output position
+      writeOutput(outputOfPEs, outputMemory, outputStatus);
+      outputStatus = outputStatus + 1;
 
       // update PE Status again to read next layers
       // finishedPSum -> false, isWaiting -> false, index -> 0, pop fifo
@@ -372,8 +379,8 @@ namespace simulator
       int partialInputHeight = (memoryIndex == 0 || memoryIndex == 3) ? input_height / 2 + input_height % 2 : input_height / 2;
       int partialInputWidth = (memoryIndex == 0 || memoryIndex == 2) ? input_width / 2 + input_width % 2 : input_width / 2;
         // start position of window
-      for (int windowStartHeight = 0; windowStartHeight < partialInputHeight - kernel_height + 1; windowStartHeight++){
-        for (int windowStartWidth = 0; windowStartWidth < partialInputWidth - kernel_width + 1; windowStartWidth++){
+      for (int windowStartHeight = 0; windowStartHeight < partialInputHeight - kernel_height + 1; windowStartHeight = windowStartHeight + stride){
+        for (int windowStartWidth = 0; windowStartWidth < partialInputWidth - kernel_width + 1; windowStartWidth = windowStartWidth + stride){
           for (int kh = 0; kh < kernel_height; kh++){
             for (int kw = 0; kw < kernel_width; kw++){
               for (int channelGroup = 0; channelGroup < num_input_channel_group; channelGroup++){
@@ -399,6 +406,33 @@ namespace simulator
         weightValuesFifos[memoryIndex][input_channel].push_back(lastVal);
       }
     }
-  }
+  };
+
+  void writeOutput(
+    std::vector<std::vector<int>>& outputOfPEs,
+    std::vector<std::vector<std::vector<int>>>& outputMemory,
+    int outputStatus,
+    int input_height,
+    int input_width,
+    int kernel_height,
+    int kernel_width,
+    int stride,
+    int num_output_channel
+  )
+  {
+    int output_height = ((input_height - kernel_height) / stride) + 1;
+    int output_width = ((input_width - kernel_width) / stride) + 1;
+    for (int h = 0; h < num_PE_height; h++)
+    {
+      for (int w = 0; w < num_PE_width; w++){
+        int outputChannelGroup = outputStatus / (output_height * output_width);
+        int outputPositionIndex = outputStatus % (output_height * output_width);
+        int writeOutputChannel = h + 4 * outputChannelGroup;
+        int writeOutputHeight = outputPositionIndex / output_width;
+        int writeOutputWidth = outputPositionIndex % output_width;
+        outputMemory[writeOutputChannel][writeOutputHeight][writeOutputWidth] = outputOfPEs[h][w];
+      }
+    }
+  };
 
 }

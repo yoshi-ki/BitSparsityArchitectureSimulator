@@ -23,6 +23,7 @@ namespace simulator
       PEArray(
         std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& inputMemories,
         std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& weightMemories,
+        std::vector<std::vector<std::vector<int>>>& outputMemories,
         int num_input_channel_group,
         int input_height,
         int input_width,
@@ -40,7 +41,8 @@ namespace simulator
       // input and output memory
       // std::vector<std::vector<std::int8_t>> inputMemories;
       // std::vector<std::vector<std::int8_t>> weightMemories;
-      std::vector<std::vector<std::int8_t>> outputMemories;
+      std::vector<std::vector<std::vector<int>>> &outputMemory;
+      int outputStatus;
 
       // value fifos
       std::vector<std::vector<std::deque<FIFOValues>>> inputValuesFifos;
