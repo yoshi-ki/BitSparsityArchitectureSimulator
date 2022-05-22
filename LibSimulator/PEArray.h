@@ -23,7 +23,6 @@ namespace simulator
       PEArray(
         std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& inputMemories,
         std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& weightMemories,
-        std::vector<std::vector<std::vector<int>>>& outputMemories,
         int num_input_channel_group,
         int input_height,
         int input_width,
@@ -41,7 +40,7 @@ namespace simulator
       // input and output memory
       // std::vector<std::vector<std::int8_t>> inputMemories;
       // std::vector<std::vector<std::int8_t>> weightMemories;
-      std::vector<std::vector<std::vector<int>>> &outputMemory;
+      std::vector<std::vector<std::vector<int>>> outputMemory;
       int outputStatus;
 
       // value fifos
@@ -123,5 +122,24 @@ namespace simulator
         std::vector<std::vector<std::deque<FIFOValues>>> & inputValuesFifos,
         std::vector<std::vector<std::deque<FIFOValues>>> & weightValuesFifos
       );
+
+    void writeOutput(
+      std::vector<std::vector<int>>& outputOfPEs,
+      std::vector<std::vector<std::vector<int>>>& outputMemory,
+      int outputStatus,
+      int output_height,
+      int output_width,
+      int num_output_channel
+    );
+
+    int num_input_channel_group;
+    int input_height;
+    int input_width;
+    int kernel_height;
+    int kernel_width;
+    int stride;
+    int num_output_channel;
+    int output_height;
+    int output_width;
   };
 }

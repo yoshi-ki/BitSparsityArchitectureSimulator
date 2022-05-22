@@ -16,7 +16,6 @@ namespace simulator
   PEArray::PEArray(
     std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& inputMemories,
     std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& weightMemories,
-    std::vector<std::vector<std::vector<int>>>& outputMemoryIn,
     int num_input_channel_group,
     int input_height,
     int input_width,
@@ -28,8 +27,19 @@ namespace simulator
   {
     busy = true;
 
-    outputStatus = 0;
-    outputMemory = outputMemoryIn;
+    PEArray::outputStatus = 0;
+    PEArray::num_input_channel_group = num_input_channel_group;
+    PEArray::input_height = input_height;
+    PEArray::input_width = input_width;
+    PEArray::kernel_height = kernel_height;
+    PEArray::kernel_width = kernel_height;
+    PEArray::stride = stride;
+    PEArray::num_output_channel = num_output_channel;
+
+    PEArray::output_height = ((input_height - kernel_height) / stride) + 1;
+    PEArray::output_width = ((input_width - kernel_width) / stride) + 1;
+
+    outputMemory = std::vector<std::vector<std::vector<int>>>(num_output_channel, std::vector<std::vector<int>>(output_height, std::vector<int>(output_width)));
 
     inputValuesFifos = std::vector<std::vector<std::deque<FIFOValues>>>(num_PE_width, std::vector<std::deque<FIFOValues>>(num_PE_parallel));
     weightValuesFifos = std::vector<std::vector<std::deque<FIFOValues>>> (num_PE_height, std::vector<std::deque<FIFOValues>>(num_PE_parallel));
@@ -85,7 +95,7 @@ namespace simulator
       // TODO: write output to the corresponding position
       // TODO: something wired might happen when 0 input
       // write the output of PEs to the corresponding output position
-      writeOutput(outputOfPEs, outputMemory, outputStatus);
+      writeOutput(outputOfPEs, outputMemory, outputStatus, output_height, output_width, num_output_channel);
       outputStatus = outputStatus + 1;
 
       // update PE Status again to read next layers
@@ -412,16 +422,11 @@ namespace simulator
     std::vector<std::vector<int>>& outputOfPEs,
     std::vector<std::vector<std::vector<int>>>& outputMemory,
     int outputStatus,
-    int input_height,
-    int input_width,
-    int kernel_height,
-    int kernel_width,
-    int stride,
+    int output_height,
+    int output_width,
     int num_output_channel
   )
   {
-    int output_height = ((input_height - kernel_height) / stride) + 1;
-    int output_width = ((input_width - kernel_width) / stride) + 1;
     for (int h = 0; h < num_PE_height; h++)
     {
       for (int w = 0; w < num_PE_width; w++){
