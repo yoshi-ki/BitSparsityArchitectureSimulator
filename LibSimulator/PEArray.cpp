@@ -5,12 +5,7 @@
 
 namespace simulator
 {
-  // bit fifos
-  std::vector<std::queue<std::uint8_t>> bitInputFifos;
-  std::vector<std::queue<std::uint8_t>> bitWeightFifos;
-
   // bool that represents the PE Array is computing now or not
-  bool busy;
 
   // PE Array
   int num_PE_height = 8;
@@ -21,40 +16,122 @@ namespace simulator
   PEArray::PEArray(
     std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& inputMemories,
     std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& weightMemories,
-    int kernel_height,
-    int kernel_width,
+    int num_input_channel_group,
     int input_height,
     int input_width,
-    int stride
+    int kernel_height,
+    int kernel_width,
+    int stride,
+    int num_output_channel
   )
   {
+    busy = false;
+    // std::vector<std::vector<std::queue<std::int8_t>>> inputValuesFifos(num_PE_width, std::vector<std::queue<std::int8_t>>(num_PE_parallel));
+    // std::vector<std::vector<std::queue<std::int8_t>>> weightValuesFifos(num_PE_height, std::vector<std::queue<std::int8_t>>(num_PE_parallel));
+    inputValuesFifos = std::vector<std::vector<std::queue<std::int8_t>>>(num_PE_width, std::vector<std::queue<std::int8_t>>(num_PE_parallel));
+    weightValuesFifos = std::vector<std::vector<std::queue<std::int8_t>>> (num_PE_height, std::vector<std::queue<std::int8_t>>(num_PE_parallel));
+
     // convert input activation and weight to the bit format,
     // because we only need bit format value
-    convertMemoriesToBitFifos(inputMemories, weightMemories, this.bitInputFifos, bitWeightFifos);
+    convertInputMemoriesToFifos(inputMemories, inputValuesFifos, num_input_channel_group, input_height, input_width, kernel_height, kernel_width, stride);
+    convertWeightMemoriesToFifos(weightMemories, weightValuesFifos, num_input_channel_group, input_height, input_width, kernel_height, kernel_width, stride, num_output_channel);
+
+    // states to control PEs
+    isInputFifoWaiting = std::vector<bool>(num_PE_width);
+    isWeightFifoWaiting = std::vector<bool>(num_PE_height);
+    indexInputBit = std::vector<int>(num_PE_width);
+    indexWeightBit = std::vector<int>(num_PE_height);
+
+    // Fifos that correspond to each PEs
+    bitInputs = std::vector<std::vector<std::vector<std::uint8_t>>>(num_PE_width, std::vector<std::vector<std::uint8_t>>(num_PE_parallel));
+    bitWeights = std::vector<std::vector<std::vector<std::uint8_t>>>(num_PE_height, std::vector<std::vector<std::uint8_t>>(num_PE_parallel));
   }
 
   bool PEArray::execute_one_step()
   {
-    // we use bit fifo for mock purpose
-    std::vector<std::vector<int>> outputOfPEs(num_PE_height, std::vector<int>(num_PE_width));
+    // if all of the value fifos become empty, we finish execution
+    if(isLayerFinished(inputValuesFifos, weightValuesFifos)){
+      busy = false;
+      return busy;
+    }
+
+    // decode values
+    decodeValuesToBits(inputValuesFifos, bitInputs);
+    decodeValuesToBits(weightValuesFifos, bitWeights);
+
+    // we use
+    std::vector<std::vector<outputPE>> outputOfPEs(num_PE_height, std::vector<outputPE>(num_PE_width));
     for (int h = 0; h < num_PE_height; h++){
       for (int w = 0; w < num_PE_width; w++){
-        // (std::vector<unsigned int>& bitActivations, std::vector<unsigned int>& bitWeights)
-        outputOfPEs[h][w] = PEs[h][w].execute_one_step();
+        outputOfPEs[h][w] = PEs[h][w].execute_one_step(bitInputFifos[w], bitWeightFifos[h]);
       }
     }
 
-    // pop all fifos here
+    // for mock of step 1, we write output if all PEs finish
+    if (std::all_of(outputOfPEs.begin(), outputOfPEs.end(), [](std::vector<outputPE> x) { return std::all_of(x.begin(), x.end(), [](bool x) {return x;}); } ))
+    {
+      // write to output of PE to the corresponding output position
 
-    return busy;
+      // reset state inside PE
+      for (int h = 0; h < num_PE_height; h++){
+        for (int w = 0; w < num_PE_width; w++){
+          PEs[h][w].reset_state();
+        }
+      }
+    }
+  }
+
+  bool PEArray::isLayerFinished(
+    std::vector<std::vector<std::queue<std::int8_t>>>& inputFifos,
+    std::vector<std::vector<std::queue<std::int8_t>>>& weightFifos
+  )
+  {
+    bool isFinished = true;
+    for (int i = 0; i < inputFifos.size(); i++){
+      for (int j = 0; j < inputFifos[i].size(); j++){
+        isFinished = isFinished && inputFifos[i][j].empty();
+      }
+    }
+    for (int i = 0; i < weightFifos.size(); i++){
+      for (int j = 0; j < weightFifos[i].size(); j++){
+        isFinished = isFinished && weightFifos[i][j].empty();
+      }
+    }
+    return isFinished;
+  }
+
+  void PEArray::decodeValuesToBits(
+    std::vector<std::vector<std::queue<std::int8_t>>>& valueFifos,
+    std::vector<std::vector<std::vector<std::uint8_t>>>bitRepresentations
+  )
+  {
+    for (int fifoIndex = 0; fifoIndex < valueFifos.size(); fifoIndex++){
+      for (int input_channel = 0; input_channel < num_PE_parallel; input_channel++){
+        while (!valueFifos.empty())
+        {
+          int8_t val = valueFifos[fifoIndex][input_channel].front();
+          valueFifos[fifoIndex][input_channel].pop();
+          int bitVectorIndex = 0;
+          for (int i = 7; i >= 0; i--)
+          {
+            int mask = 1 << i;
+            if ((val & mask) > 0)
+            {
+              bitRepresentations[fifoIndex][input_channel][bitVectorIndex] = (std::uint8_t)i;
+              bitVectorIndex++;
+            }
+          }
+        }
+      }
+    }
   }
 
   void PEArray::convertMemoriesToBitFifos(
     std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& inputMemories,
     std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& weightMemories,
-    std::vector<std::queue<std::uint8_t>>& bitInputFifos,
-    std::vector<std::queue<std::uint8_t>>& bitWeightFifos,
-    int input_channel_group,
+    std::vector<std::vector<std::queue<std::uint8_t>>>& bitInputFifos,
+    std::vector<std::vector<std::queue<std::uint8_t>>>& bitWeightFifos,
+    int num_input_channel_group,
     int input_height,
     int input_width,
     int kernel_height,
@@ -68,8 +145,8 @@ namespace simulator
     std::vector<std::vector<std::queue<std::int8_t>>> weightValuesFifos(num_PE_height, std::vector<std::queue<std::int8_t>>(num_PE_parallel));
 
     // by using the layer config, we will consume the values
-    convertInputMemoriesToFifos(inputMemories, inputValuesFifos, input_channel_group, input_height, input_width, kernel_height, kernel_width, stride);
-    convertWeightMemoriesToFifos(weightMemories, weightValuesFifos, input_channel_group, input_height, input_width, kernel_height, kernel_width, stride, num_output_channel);
+    convertInputMemoriesToFifos(inputMemories, inputValuesFifos, num_input_channel_group, input_height, input_width, kernel_height, kernel_width, stride);
+    convertWeightMemoriesToFifos(weightMemories, weightValuesFifos, num_input_channel_group, input_height, input_width, kernel_height, kernel_width, stride, num_output_channel);
 
     // convert to bit
     convertValuesFifosToBitFifos(inputValuesFifos, bitInputFifos);
@@ -104,7 +181,7 @@ namespace simulator
   void PEArray::convertInputMemoriesToFifos(
     std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& inputMemories,
     std::vector<std::vector<std::queue<std::int8_t>>>& inputValuesFifos,
-    int input_channel_group,
+    int num_input_channel_group,
     int input_height,
     int input_width,
     int kernel_height,
@@ -116,7 +193,7 @@ namespace simulator
       // input is divided into four areas, so we need to compute the size of the each areas
       int partialInputHeight = (memoryIndex == 0 || memoryIndex == 3) ? input_height / 2 + input_height % 2 : input_height / 2;
       int partialInputWidth = (memoryIndex == 0 || memoryIndex == 2) ? input_width / 2 + input_width % 2 : input_width / 2;
-      for (int channelGroup = 0; channelGroup < input_channel_group; channelGroup++){
+      for (int channelGroup = 0; channelGroup < num_input_channel_group; channelGroup++){
         // start position of window
         for (int windowStartHeight = 0; windowStartHeight < partialInputHeight - kernel_height + 1; windowStartHeight++){
           for (int windowStartWidth = 0; windowStartWidth < partialInputWidth - kernel_width + 1; windowStartWidth++){
@@ -138,7 +215,7 @@ namespace simulator
   void PEArray::convertWeightMemoriesToFifos(
     std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& weightMemories,
     std::vector<std::vector<std::queue<std::int8_t>>>& weightValuesFifos,
-    int input_channel_group,
+    int num_input_channel_group,
     int input_height,
     int input_width,
     int kernel_height,
@@ -151,7 +228,7 @@ namespace simulator
       int memoryIndex = output_channel % 8;
       int partialInputHeight = (memoryIndex == 0 || memoryIndex == 3) ? input_height / 2 + input_height % 2 : input_height / 2;
       int partialInputWidth = (memoryIndex == 0 || memoryIndex == 2) ? input_width / 2 + input_width % 2 : input_width / 2;
-      for (int channelGroup = 0; channelGroup < input_channel_group; channelGroup++){
+      for (int channelGroup = 0; channelGroup < num_input_channel_group; channelGroup++){
         // start position of window
         for (int windowStartHeight = 0; windowStartHeight < partialInputHeight - kernel_height + 1; windowStartHeight++){
           for (int windowStartWidth = 0; windowStartWidth < partialInputWidth - kernel_width + 1; windowStartWidth++){
