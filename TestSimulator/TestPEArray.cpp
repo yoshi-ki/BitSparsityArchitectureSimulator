@@ -2,6 +2,7 @@
 #include <iostream>
 #include <gtest/internal/gtest-port.h>
 #include <set>
+#include <cstdlib>
 #include "PE.h"
 #include "PEArray.h"
 
@@ -45,8 +46,8 @@ namespace simulator::tests
     int stride=1;
     int num_output_channel=16;
     std::set<int> availableValueSet = {1, 2, 3};
-    // makeInput(inputMemories, num_input_channel, input_height, input_width, availableValueSet);
-    // makeWeight(weightMemories, kernel_height, kernel_width, num_input_channel_group, num_output_channel)
+    makeInput(inputMemories, num_input_channel, input_height, input_width, availableValueSet);
+    makeWeight(weightMemories, kernel_height, kernel_width, num_input_channel, num_output_channel);
 
     simulator::PEArray peArray = simulator::PEArray(
       inputMemories,
@@ -61,5 +62,17 @@ namespace simulator::tests
     );
   }
 
-  void makeInput(){};
+  void makeRandomInput(
+    std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& inputMemories,
+    int num_input_channel,
+    int input_height,
+    int input_width,
+    std::set<int>& availableValueSet
+  )
+  {
+    std::srand(num_input_channel + input_height + input_width);
+    int setSize = availableValueSet.size();
+    for(int )
+    return;
+  };
 }
