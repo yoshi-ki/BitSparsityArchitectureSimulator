@@ -9,7 +9,7 @@ namespace simulator
   );
 
   void convertWeightToWeightMemoryFormat(
-    std::vector<std::vector<std::vector<int>>> &weightValues,
+    std::vector<std::vector<std::vector<std::vector<int>>>> &weightValues,
     std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>> &weightMemories
   );
 

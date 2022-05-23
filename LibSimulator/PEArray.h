@@ -22,7 +22,7 @@ namespace simulator
       // what initializer does is to set the input and weight values, and layer config
       PEArray(
         std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& inputMemories,
-        std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& weightMemories,
+        std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>>& weightMemories,
         int num_input_channel,
         int input_height,
         int input_width,
@@ -75,7 +75,7 @@ namespace simulator
       );
 
       void convertWeightMemoriesToFifos(
-        std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& weightMemories,
+        std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>>& weightMemories,
         std::vector<std::vector<std::deque<FIFOValues>>>& weightValuesFifos,
         int num_input_channel_group,
         int input_height,

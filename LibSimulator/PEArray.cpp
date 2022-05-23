@@ -15,7 +15,7 @@ namespace simulator
 
   PEArray::PEArray(
     std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& inputMemories,
-    std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& weightMemories,
+    std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>>& weightMemories,
     int num_input_channel,
     int input_height,
     int input_width,
@@ -377,7 +377,7 @@ namespace simulator
   }
 
   void PEArray::convertWeightMemoriesToFifos(
-    std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& weightMemories,
+    std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>>& weightMemories,
     std::vector<std::vector<std::deque<FIFOValues>>>& weightValuesFifos,
     int num_input_channel_group,
     int input_height,
@@ -389,7 +389,7 @@ namespace simulator
   )
   {
     for (int output_channel = 0; output_channel < num_output_channel; output_channel++){
-      int memoryIndex = output_channel % 8;
+      int memoryIndex = output_channel % num_PE_height;
       int partialInputHeight = (memoryIndex == 0 || memoryIndex == 3) ? input_height / 2 + input_height % 2 : input_height / 2;
       int partialInputWidth = (memoryIndex == 0 || memoryIndex == 2) ? input_width / 2 + input_width % 2 : input_width / 2;
         // start position of window
@@ -402,7 +402,7 @@ namespace simulator
                 for (int input_channel = 0; input_channel < num_PE_parallel; input_channel++){
                   weightValuesFifos[memoryIndex][input_channel].push_front(
                     FIFOValues{
-                        weightMemories[memoryIndex][windowStartHeight + kernel_height][windowStartWidth + kernel_width][channelGroup][input_channel],
+                        weightMemories[memoryIndex][output_channel / num_PE_height][windowStartHeight + kernel_height][windowStartWidth + kernel_width][channelGroup][input_channel],
                         false
                     });
                 }
