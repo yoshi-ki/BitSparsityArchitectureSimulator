@@ -16,7 +16,7 @@ namespace simulator
   PEArray::PEArray(
     std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& inputMemories,
     std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& weightMemories,
-    int num_input_channel_group,
+    int num_input_channel,
     int input_height,
     int input_width,
     int kernel_height,
@@ -28,7 +28,7 @@ namespace simulator
     busy = true;
 
     PEArray::outputStatus = 0;
-    PEArray::num_input_channel_group = num_input_channel_group;
+    PEArray::num_input_channel_group = num_input_channel / num_PE_parallel + 1;
     PEArray::input_height = input_height;
     PEArray::input_width = input_width;
     PEArray::kernel_height = kernel_height;
@@ -49,11 +49,11 @@ namespace simulator
     convertInputMemoriesToFifos(inputMemories, inputValuesFifos, num_input_channel_group, input_height, input_width, kernel_height, kernel_width, stride);
     convertWeightMemoriesToFifos(weightMemories, weightValuesFifos, num_input_channel_group, input_height, input_width, kernel_height, kernel_width, stride, num_output_channel);
 
-    // states to control PEs
+    // Initialize states to control PEs
     inputControllerStatusForPEs = std::vector<PEControllerStatus>(num_PE_width);
     weightControllerStatusForPEs = std::vector<PEControllerStatus>(num_PE_height);
 
-    // Fifos that correspond to each PEs
+    // Initialize Fifos that correspond to each PEs
     bitInputs = std::vector<std::vector<std::vector<std::uint8_t>>>(num_PE_width, std::vector<std::vector<std::uint8_t>>(num_PE_parallel));
     bitWeights = std::vector<std::vector<std::vector<std::uint8_t>>>(num_PE_height, std::vector<std::vector<std::uint8_t>>(num_PE_parallel));
   }
@@ -92,7 +92,6 @@ namespace simulator
     // for mock of step 1, we write output if all PEs finish
     if (finishedPsumExecution)
     {
-      // TODO: write output to the corresponding position
       // TODO: something wired might happen when 0 input
       // write the output of PEs to the corresponding output position
       writeOutput(outputOfPEs, outputMemory, outputStatus, output_height, output_width, num_output_channel);
@@ -109,6 +108,7 @@ namespace simulator
         }
       }
     }
+    return busy;
   };
 
   bool PEArray::isLayerFinished(
@@ -364,6 +364,10 @@ namespace simulator
 
       // insert end of the psum
       for (int input_channel = 0; input_channel < num_PE_parallel; input_channel++){
+        if(inputValuesFifos[memoryIndex][input_channel].empty()){
+          continue;
+        }
+
         auto lastVal = inputValuesFifos[memoryIndex][input_channel].back();
         lastVal.value = true;
         inputValuesFifos[memoryIndex][input_channel].pop_back();
@@ -410,6 +414,9 @@ namespace simulator
 
       // insert end of the psum
       for (int input_channel = 0; input_channel < num_PE_parallel; input_channel++){
+        if(weightValuesFifos[memoryIndex][input_channel].empty()){
+          continue;
+        }
         auto lastVal = weightValuesFifos[memoryIndex][input_channel].back();
         lastVal.value = true;
         weightValuesFifos[memoryIndex][input_channel].pop_back();
@@ -418,7 +425,7 @@ namespace simulator
     }
   };
 
-  void writeOutput(
+  void PEArray::writeOutput(
     std::vector<std::vector<int>>& outputOfPEs,
     std::vector<std::vector<std::vector<int>>>& outputMemory,
     int outputStatus,
