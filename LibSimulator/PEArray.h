@@ -4,6 +4,10 @@
 
 namespace simulator
 {
+  const int num_PE_height = 8;
+  const int num_PE_width = 4;
+  const int num_PE_parallel = 16; // PE consumes 16 bits at once
+
   struct PEControllerStatus{
     std::vector<bool> isWaiting;
     std::vector<int> nextProcessIndex;

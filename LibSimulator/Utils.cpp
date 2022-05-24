@@ -5,6 +5,9 @@
 
 namespace simulator
 {
+  // int num_PE_parallel = 16;
+  // int num_PE_height = 8;
+
   void convertInputToInputMemoryFormat(
     std::vector<std::vector<std::vector<int>>> &inputValues,
     std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>> &inputMemories
@@ -32,7 +35,7 @@ namespace simulator
 
   void convertWeightToWeightMemoryFormat(
     std::vector<std::vector<std::vector<std::vector<int>>>> &weightValues,
-    std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>> &weightMemories
+    std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>> &weightMemories
   )
   {
     int num_output_channel = weightValues.size();

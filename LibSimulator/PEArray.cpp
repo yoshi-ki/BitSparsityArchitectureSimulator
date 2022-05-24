@@ -8,10 +8,13 @@ namespace simulator
   // bool that represents the PE Array is computing now or not
 
   // PE Array
-  int num_PE_height = 8;
-  int num_PE_width = 4;
+  // int num_PE_height = 8;
+  // int num_PE_width = 4;
+  // int num_PE_parallel = 16;
+  // extern const int num_PE_height = 8;
+  // extern const int num_PE_width = 4;
+  // extern const int num_PE_parallel = 16; // PE consumes 16 bits at once
   std::vector<std::vector<simulator::PE>> PEs(num_PE_height, std::vector<simulator::PE>(num_PE_width));
-  int num_PE_parallel = 16; // PE consumes 16 bits at one time
 
   PEArray::PEArray(
     std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& inputMemories,
