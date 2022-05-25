@@ -48,7 +48,7 @@ namespace simulator
           for (int kernel_width = 0; kernel_width < num_kernel_width; kernel_width++){
             int memoryIndex = output_channel % num_PE_height;
             int channelGroup = input_channel / num_PE_parallel;
-            weightMemories[memoryIndex][output_channel / num_PE_height][kernel_height][kernel_width][channelGroup][input_channel % channelGroup] =
+            weightMemories[memoryIndex][output_channel / num_PE_height][kernel_height][kernel_width][channelGroup][input_channel % num_PE_parallel] =
                 weightValues[output_channel][input_channel][kernel_height][kernel_width];
           }
         }

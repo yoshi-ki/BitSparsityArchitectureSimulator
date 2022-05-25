@@ -2,6 +2,9 @@
 #include <vector>
 #include <deque>
 
+template<class T>
+using v = std::vector<T>;
+
 namespace simulator
 {
   const int num_PE_height = 8;

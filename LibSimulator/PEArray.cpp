@@ -8,12 +8,6 @@ namespace simulator
   // bool that represents the PE Array is computing now or not
 
   // PE Array
-  // int num_PE_height = 8;
-  // int num_PE_width = 4;
-  // int num_PE_parallel = 16;
-  // extern const int num_PE_height = 8;
-  // extern const int num_PE_width = 4;
-  // extern const int num_PE_parallel = 16; // PE consumes 16 bits at once
   std::vector<std::vector<simulator::PE>> PEs(num_PE_height, std::vector<simulator::PE>(num_PE_width));
 
   PEArray::PEArray(
@@ -31,7 +25,6 @@ namespace simulator
     busy = true;
 
     PEArray::outputStatus = 0;
-    PEArray::num_input_channel_group = num_input_channel / num_PE_parallel + 1;
     PEArray::input_height = input_height;
     PEArray::input_width = input_width;
     PEArray::kernel_height = kernel_height;
@@ -49,8 +42,8 @@ namespace simulator
 
     // convert input activation and weight to the bit format,
     // because we only need bit format value
-    convertInputMemoriesToFifos(inputMemories, inputValuesFifos, num_input_channel_group, input_height, input_width, kernel_height, kernel_width, stride);
-    convertWeightMemoriesToFifos(weightMemories, weightValuesFifos, num_input_channel_group, input_height, input_width, kernel_height, kernel_width, stride, num_output_channel);
+    convertInputMemoriesToFifos(inputMemories, inputValuesFifos, num_input_channel, input_height, input_width, kernel_height, kernel_width, stride);
+    convertWeightMemoriesToFifos(weightMemories, weightValuesFifos, num_input_channel, input_height, input_width, kernel_height, kernel_width, stride, num_output_channel);
 
     // Initialize states to control PEs
     inputControllerStatusForPEs = std::vector<PEControllerStatus>(num_PE_width);
@@ -333,7 +326,7 @@ namespace simulator
   void PEArray::convertInputMemoriesToFifos(
     std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& inputMemories,
     std::vector<std::vector<std::deque<FIFOValues>>>& inputValuesFifos,
-    int num_input_channel_group,
+    int num_input_channel,
     int input_height,
     int input_width,
     int kernel_height,
@@ -341,6 +334,7 @@ namespace simulator
     int stride
   )
   {
+    int num_input_channel_group = num_input_channel / num_PE_parallel + fmin(num_input_channel % num_PE_parallel, 1);
     for (int memoryIndex = 0; memoryIndex < inputMemories.size(); memoryIndex++){
       // input is divided into four areas, so we need to compute the size of the each areas
       int partialInputHeight = (memoryIndex == 0 || memoryIndex == 3) ? input_height / 2 + input_height % 2 : input_height / 2;
@@ -382,7 +376,7 @@ namespace simulator
   void PEArray::convertWeightMemoriesToFifos(
     std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>>& weightMemories,
     std::vector<std::vector<std::deque<FIFOValues>>>& weightValuesFifos,
-    int num_input_channel_group,
+    int num_input_channel,
     int input_height,
     int input_width,
     int kernel_height,
@@ -391,13 +385,16 @@ namespace simulator
     int num_output_channel
   )
   {
+    int num_input_channel_group = num_input_channel / num_PE_parallel + fmin(num_input_channel % num_PE_parallel, 1);
     for (int output_channel = 0; output_channel < num_output_channel; output_channel++){
       int memoryIndex = output_channel % num_PE_height;
       int partialInputHeight = (memoryIndex == 0 || memoryIndex == 3) ? input_height / 2 + input_height % 2 : input_height / 2;
       int partialInputWidth = (memoryIndex == 0 || memoryIndex == 2) ? input_width / 2 + input_width % 2 : input_width / 2;
-        // start position of window
+
+      // this is not the start position here, it is just iteration
       for (int windowStartHeight = 0; windowStartHeight < partialInputHeight - kernel_height + 1; windowStartHeight = windowStartHeight + stride){
         for (int windowStartWidth = 0; windowStartWidth < partialInputWidth - kernel_width + 1; windowStartWidth = windowStartWidth + stride){
+
           for (int kh = 0; kh < kernel_height; kh++){
             for (int kw = 0; kw < kernel_width; kw++){
               for (int channelGroup = 0; channelGroup < num_input_channel_group; channelGroup++){
@@ -405,7 +402,7 @@ namespace simulator
                 for (int input_channel = 0; input_channel < num_PE_parallel; input_channel++){
                   weightValuesFifos[memoryIndex][input_channel].push_front(
                     FIFOValues{
-                        weightMemories[memoryIndex][output_channel / num_PE_height][windowStartHeight + kernel_height][windowStartWidth + kernel_width][channelGroup][input_channel],
+                        weightMemories[memoryIndex][output_channel / num_PE_height][kh][kw][channelGroup][input_channel],
                         false
                     });
                 }
