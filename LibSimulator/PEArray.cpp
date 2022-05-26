@@ -10,9 +10,12 @@ namespace simulator
   // PE Array
   std::vector<std::vector<simulator::PE>> PEs(num_PE_height, std::vector<simulator::PE>(num_PE_width));
 
+  // for unit test
+  PEArray::PEArray(){};
+
   PEArray::PEArray(
-    std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& inputMemories,
-    std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>>& weightMemories,
+    std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>& inputMemories,
+    std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>>& weightMemories,
     int num_input_channel,
     int input_height,
     int input_width,
@@ -50,14 +53,22 @@ namespace simulator
     weightControllerStatusForPEs = std::vector<PEControllerStatus>(num_PE_height);
 
     // Initialize Fifos that correspond to each PEs
-    bitInputs = std::vector<std::vector<std::vector<std::uint8_t>>>(num_PE_width, std::vector<std::vector<std::uint8_t>>(num_PE_parallel));
-    bitWeights = std::vector<std::vector<std::vector<std::uint8_t>>>(num_PE_height, std::vector<std::vector<std::uint8_t>>(num_PE_parallel));
+    bitInputs = v<v<v<unsigned int>>>(num_PE_width, v<v<unsigned int>>(num_PE_parallel, v<unsigned int>(num_bit_size)));
+    bitWeights = v<v<v<unsigned int>>>(num_PE_height, v<v<unsigned int>>(num_PE_parallel, v<unsigned int>(num_bit_size)));
   }
 
   bool PEArray::execute_one_step()
   {
     // if all of the value fifos become empty, we finish execution
     if(isLayerFinished(inputValuesFifos, weightValuesFifos)){
+      // output for debug
+      // for (int output_channel = 0; output_channel < num_output_channel; output_channel++){
+      //   for (int output_heigh = 0; output_heigh < output_height; output_heigh++){
+      //     for (int output_widt = 0; output_widt < output_width; output_widt++){
+      //       std::cout << outputMemory[output_channel][output_heigh][output_widt] <<std::endl ;
+      //     }
+      //   }
+      // }
       busy = false;
       return busy;
     }
@@ -69,8 +80,8 @@ namespace simulator
     // based on the PE controller status, prepare input for PEs
     auto inputsForPEs = std::vector<std::vector<unsigned int>>(num_PE_width, std::vector<unsigned int>(num_PE_parallel));
     auto weightsForPEs = std::vector<std::vector<unsigned int>>(num_PE_height, std::vector<unsigned int>(num_PE_parallel));
-    createInputForPEsBasedOnControllerStatus(bitInputs, inputControllerStatusForPEs, inputsForPEs);
-    createInputForPEsBasedOnControllerStatus(bitWeights, weightControllerStatusForPEs, weightsForPEs);
+    createInputForPEsBasedOnControllerStatus(bitInputs, inputControllerStatusForPEs, inputsForPEs, num_PE_width);
+    createInputForPEsBasedOnControllerStatus(bitWeights, weightControllerStatusForPEs, weightsForPEs, num_PE_height);
 
     // we use
     std::vector<std::vector<int>> outputOfPEs(num_PE_height, std::vector<int>(num_PE_width));
@@ -147,7 +158,7 @@ namespace simulator
 
   void PEArray::decodeValuesToBits(
     std::vector<std::vector<std::deque<FIFOValues>>>& valueFifos,
-    std::vector<std::vector<std::vector<std::uint8_t>>>bitRepresentations
+    std::vector<std::vector<std::vector<unsigned int>>>bitRepresentations
   )
   {
     for (int fifoIndex = 0; fifoIndex < valueFifos.size(); fifoIndex++){
@@ -159,7 +170,7 @@ namespace simulator
           int mask = 1 << i;
           if ((val & mask) > 0)
           {
-            bitRepresentations[fifoIndex][input_channel][bitVectorIndex] = (std::uint8_t)i;
+            bitRepresentations[fifoIndex][input_channel][bitVectorIndex] = (unsigned int)i;
             bitVectorIndex++;
           }
         }
@@ -168,12 +179,13 @@ namespace simulator
   };
 
   void PEArray::createInputForPEsBasedOnControllerStatus(
-    std::vector<std::vector<std::vector<std::uint8_t>>>& bitRepresentations,
+    std::vector<std::vector<std::vector<unsigned int>>>& bitRepresentations,
     std::vector<PEControllerStatus>& controllerStatusForPEs,
-    std::vector<std::vector<unsigned int>>& representationsForPEs
+    std::vector<std::vector<unsigned int>>& representationsForPEs,
+    int num_Fifo
   )
   {
-    for (int fifoIndex = 0; fifoIndex < num_PE_width; fifoIndex++){
+    for (int fifoIndex = 0; fifoIndex < num_Fifo; fifoIndex++){
       auto controllerStatus = controllerStatusForPEs[fifoIndex];
       for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
         if(controllerStatus.isWaiting[bitIndex]){
@@ -193,8 +205,8 @@ namespace simulator
     std::vector<PEControllerStatus>& weightControllerStatusForPEs,
     std::vector<std::vector<std::deque<FIFOValues>>>& inputValuesFifos,
     std::vector<std::vector<std::deque<FIFOValues>>>& weightValuesFifos,
-    std::vector<std::vector<std::vector<std::uint8_t>>>& bitInputs,
-    std::vector<std::vector<std::vector<std::uint8_t>>>& bitWeights
+    std::vector<std::vector<std::vector<unsigned int>>>& bitInputs,
+    std::vector<std::vector<std::vector<unsigned int>>>& bitWeights
   )
   {
     auto newInputControllerStatusForPEs = std::vector<PEControllerStatus>(num_PE_width);
@@ -324,7 +336,7 @@ namespace simulator
   };
 
   void PEArray::convertInputMemoriesToFifos(
-    std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& inputMemories,
+    std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>& inputMemories,
     std::vector<std::vector<std::deque<FIFOValues>>>& inputValuesFifos,
     int num_input_channel,
     int input_height,
@@ -374,7 +386,7 @@ namespace simulator
   }
 
   void PEArray::convertWeightMemoriesToFifos(
-    std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>>& weightMemories,
+    std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>>& weightMemories,
     std::vector<std::vector<std::deque<FIFOValues>>>& weightValuesFifos,
     int num_input_channel,
     int input_height,

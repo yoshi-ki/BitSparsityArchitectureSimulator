@@ -8,7 +8,7 @@
 namespace simulator::tests
 {
   void makeRandomInput(
-    std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& inputMemories,
+    std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>& inputMemories,
     std::vector<std::vector<std::vector<int>>>& inputValues,
     int num_input_channel,
     int num_input_height,
@@ -34,7 +34,7 @@ namespace simulator::tests
   };
 
   void makeRandomWeight(
-    std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>> &weightMemories,
+    std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>> &weightMemories,
     std::vector<std::vector<std::vector<std::vector<int>>>> &weightValues,
     int num_kernel_height,
     int num_kernel_width,

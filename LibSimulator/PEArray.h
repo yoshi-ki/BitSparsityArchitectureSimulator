@@ -10,15 +10,16 @@ namespace simulator
   const int num_PE_height = 8;
   const int num_PE_width = 4;
   const int num_PE_parallel = 16; // PE consumes 16 bits at once
+  const int num_bit_size = 8;
 
   struct PEControllerStatus{
-    std::vector<bool> isWaiting;
-    std::vector<int> nextProcessIndex;
-    std::vector<bool> finishedPSum;
+    std::vector<bool> isWaiting = std::vector<bool>(num_PE_parallel);
+    std::vector<int> nextProcessIndex = std::vector<int>(num_PE_parallel);
+    std::vector<bool> finishedPSum = std::vector<bool>(num_PE_parallel);
   };
 
   struct FIFOValues{
-    std::int8_t value;
+    int value;
     bool isLast;
   };
 
@@ -27,9 +28,11 @@ namespace simulator
     public:
       /* initializer */
       // what initializer does is to set the input and weight values, and layer config
+      PEArray();
+
       PEArray(
-        std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& inputMemories,
-        std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>>& weightMemories,
+        std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>& inputMemories,
+        std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>>& weightMemories,
         int num_input_channel,
         int input_height,
         int input_width,
@@ -45,8 +48,8 @@ namespace simulator
       /* member */
 
       // input and output memory
-      // std::vector<std::vector<std::int8_t>> inputMemories;
-      // std::vector<std::vector<std::int8_t>> weightMemories;
+      // std::vector<std::vector<int>> inputMemories;
+      // std::vector<std::vector<int>> weightMemories;
       std::vector<std::vector<std::vector<int>>> outputMemory;
       int outputStatus;
 
@@ -55,8 +58,8 @@ namespace simulator
       std::vector<std::vector<std::deque<FIFOValues>>> weightValuesFifos;
 
       // bit fifos
-      std::vector<std::vector<std::vector<std::uint8_t>>> bitInputs;
-      std::vector<std::vector<std::vector<std::uint8_t>>> bitWeights;
+      std::vector<std::vector<std::vector<unsigned int>>> bitInputs;
+      std::vector<std::vector<std::vector<unsigned int>>> bitWeights;
 
       // states to control PEs
       // std::vector<bool> isInputFifoWaiting;
@@ -69,9 +72,9 @@ namespace simulator
       // busy or not, by this information, memory decides whether it sends data or not
       bool busy;
 
-    private:
+    // private:
       void convertInputMemoriesToFifos(
-        std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>& inputMemories,
+        std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>& inputMemories,
         std::vector<std::vector<std::deque<FIFOValues>>>& inputValuesFifos,
         int num_input_channel_group,
         int input_height,
@@ -82,7 +85,7 @@ namespace simulator
       );
 
       void convertWeightMemoriesToFifos(
-        std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<std::int8_t>>>>>>& weightMemories,
+        std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>>& weightMemories,
         std::vector<std::vector<std::deque<FIFOValues>>>& weightValuesFifos,
         int num_input_channel_group,
         int input_height,
@@ -105,13 +108,14 @@ namespace simulator
 
       void decodeValuesToBits(
         std::vector<std::vector<std::deque<FIFOValues>>> &valueFifos,
-        std::vector<std::vector<std::vector<std::uint8_t>>> bitRepresentations
+        std::vector<std::vector<std::vector<unsigned int>>> bitRepresentations
       );
 
       void createInputForPEsBasedOnControllerStatus(
-        std::vector<std::vector<std::vector<std::uint8_t>>>& bitRepresentations,
+        std::vector<std::vector<std::vector<unsigned int>>>& bitRepresentations,
         std::vector<PEControllerStatus>& controllerStatusForPEs,
-        std::vector<std::vector<unsigned int>>& representationsForPEs
+        std::vector<std::vector<unsigned int>>& representationsForPEs,
+        int num_Fifo
       );
 
       void updatePEStatus(
@@ -119,8 +123,8 @@ namespace simulator
         std::vector<PEControllerStatus> &weightControllerStatusForPEs,
         std::vector<std::vector<std::deque<FIFOValues>>> &inputValuesFifos,
         std::vector<std::vector<std::deque<FIFOValues>>> &weightValuesFifos,
-        std::vector<std::vector<std::vector<std::uint8_t>>> &bitInputs,
-        std::vector<std::vector<std::vector<std::uint8_t>>> &bitWeights
+        std::vector<std::vector<std::vector<unsigned int>>> &bitInputs,
+        std::vector<std::vector<std::vector<unsigned int>>> &bitWeights
       );
 
       void updatePEStatusWhenPsumFinish(
