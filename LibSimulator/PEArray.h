@@ -81,7 +81,8 @@ namespace simulator
         int input_width,
         int kernel_height,
         int kernel_width,
-        int stride
+        int stride,
+        int num_output_channel
       );
 
       void convertWeightMemoriesToFifos(
@@ -102,13 +103,13 @@ namespace simulator
       );
 
       bool isFinishedPSumExecution(
-        std::vector<PEControllerStatus> inputControllerStatusForPEs,
-        std::vector<PEControllerStatus> weightControllerStatusForPEs
+        std::vector<PEControllerStatus>& inputControllerStatusForPEs,
+        std::vector<PEControllerStatus>& weightControllerStatusForPEs
       );
 
       void decodeValuesToBits(
         std::vector<std::vector<std::deque<FIFOValues>>> &valueFifos,
-        std::vector<std::vector<std::vector<unsigned int>>> bitRepresentations
+        std::vector<std::vector<std::vector<unsigned int>>>& bitRepresentations
       );
 
       void createInputForPEsBasedOnControllerStatus(

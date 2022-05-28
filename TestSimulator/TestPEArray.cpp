@@ -50,23 +50,24 @@ namespace simulator::tests
     }
     auto peArray = PEArray();
     peArray.decodeValuesToBits(valueFifos, bitInputs);
+    // std::cout << "actual" << bitInputs[0][0][0] << std::endl;
     for (int memoryIndex = 0; memoryIndex < num_PE_width; memoryIndex++){
       for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
-        ASSERT_THAT(bitInputs[memoryIndex][bitIndex][0], Eq(0));
-        ASSERT_THAT(bitInputs[memoryIndex][bitIndex][1], Eq(2));
-        ASSERT_THAT(bitInputs[memoryIndex][bitIndex][2], Eq(0));
+        ASSERT_THAT(bitInputs[memoryIndex][bitIndex][0], Eq(2)); // for 4
+        ASSERT_THAT(bitInputs[memoryIndex][bitIndex][1], Eq(0)); // for 1
+        ASSERT_THAT(bitInputs[memoryIndex][bitIndex][2], Eq(0)); // for nothing (for just now and needs to be updated)
       }
     }
   }
 
   TEST(PEArrayTests, ExecuteMockConv){
     int num_input_channel=16;
-    int num_input_height=2;
-    int num_input_width=2;
+    int num_input_height=4;
+    int num_input_width=4;
     int num_kernel_height=2;
     int num_kernel_width=2;
     int stride=1;
-    int num_output_channel=16;
+    int num_output_channel=8;
     std::set<int> availableValueSet = {1, 2, 3};
 
     int num_output_height = ((num_input_height - num_kernel_height) / stride) + 1;
@@ -98,9 +99,13 @@ namespace simulator::tests
       peArray.execute_one_step();
     }
 
+    std::cout << peArray.outputMemory[0][0][0] << std::endl;
+    std::cout << peArray.outputMemory[1][0][0] << std::endl;
+
     for (int output_channel = 0; output_channel < num_output_channel; output_channel++){
       for (int output_height = 0; output_height < num_output_height; output_height++){
         for (int output_width = 0; output_width < num_output_width; num_output_width++){
+          // std::cout << peArray.outputMemory[output_channel][output_height][output_width] << std::endl;
           ASSERT_THAT(peArray.outputMemory[output_channel][output_height][output_width], Eq(outputValues[output_channel][output_height][output_width])) << ("output_channel, output_height, output_width = " + std::to_string(output_channel) + " " + std::to_string(output_height) + " " + std::to_string(output_width));
         }
       }
