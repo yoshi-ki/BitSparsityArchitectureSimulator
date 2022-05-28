@@ -52,9 +52,9 @@ namespace simulator
     inputControllerStatusForPEs = std::vector<PEControllerStatus>(num_PE_width);
     weightControllerStatusForPEs = std::vector<PEControllerStatus>(num_PE_height);
 
-    // Initialize Fifos that correspond to each PEs
-    bitInputs = v<v<v<unsigned int>>>(num_PE_width, v<v<unsigned int>>(num_PE_parallel, v<unsigned int>(num_bit_size)));
-    bitWeights = v<v<v<unsigned int>>>(num_PE_height, v<v<unsigned int>>(num_PE_parallel, v<unsigned int>(num_bit_size)));
+    // Initialize bit representations vector. 8 is for the max bit size of the value
+    decodedInputs = v<DecodedRegister>(num_PE_width, DecodedRegister{v<v<unsigned int>>(num_PE_parallel, v<unsigned>(num_PE_parallel)), v<v<bool>>(num_PE_parallel, v<bool>(8)), v<v<bool>>(num_PE_parallel, v<bool>(8))});
+    decodedWeights = v<DecodedRegister>(num_PE_height, DecodedRegister{v<v<unsigned int>>(num_PE_parallel, v<unsigned>(num_PE_parallel)), v<v<bool>>(num_PE_parallel, v<bool>(8)), v<v<bool>>(num_PE_parallel, v<bool>(8))});
   }
 
   bool PEArray::execute_one_step()
@@ -74,16 +74,16 @@ namespace simulator
     }
 
     // decode values (this circuit always run) (just look at the first element and do not change fifo)
-    decodeValuesToBits(inputValuesFifos, bitInputs);
-    decodeValuesToBits(weightValuesFifos, bitWeights);
+    decodeValuesToBits(inputValuesFifos, decodedInputs);
+    decodeValuesToBits(weightValuesFifos, decodedWeights);
 
     // based on the PE controller status, prepare input for PEs.
     // inputsForPEs and weightsForPEs are represented by bit representation.
-    auto inputsForPEs = std::vector<std::vector<unsigned int>>(num_PE_width, std::vector<unsigned int>(num_PE_parallel));
-    auto weightsForPEs = std::vector<std::vector<unsigned int>>(num_PE_height, std::vector<unsigned int>(num_PE_parallel));
-    // if pe status is "isWaiting", then we send 0.
-    createInputForPEsBasedOnControllerStatus(bitInputs, inputControllerStatusForPEs, inputsForPEs, num_PE_width);
-    createInputForPEsBasedOnControllerStatus(bitWeights, weightControllerStatusForPEs, weightsForPEs, num_PE_height);
+    auto inputsForPEs = std::vector<PEInput>(num_PE_width, PEInput{v<unsigned int>(num_PE_parallel), v<bool>(num_PE_parallel), v<bool>(num_PE_parallel)});
+    auto weightsForPEs = std::vector<PEInput>(num_PE_height, PEInput{v<unsigned int>(num_PE_parallel), v<bool>(num_PE_parallel), v<bool>(num_PE_parallel)});
+    // we check the pe status and decide we send values or not and which to send for PEs.
+    createInputForPEsBasedOnControllerStatus(decodedInputs, inputControllerStatusForPEs, inputsForPEs, num_PE_width);
+    createInputForPEsBasedOnControllerStatus(decodedWeights, weightControllerStatusForPEs, weightsForPEs, num_PE_height);
 
     // we use
     std::vector<std::vector<int>> outputOfPEs(num_PE_height, std::vector<int>(num_PE_width));
@@ -95,7 +95,7 @@ namespace simulator
     }
 
     // update pe status
-    updatePEStatus(inputControllerStatusForPEs, weightControllerStatusForPEs, inputValuesFifos, weightValuesFifos, bitInputs, bitWeights);
+    updatePEStatus(inputControllerStatusForPEs, weightControllerStatusForPEs, inputValuesFifos, weightValuesFifos, inputsForPEs, weightsForPEs);
 
     bool finishedPsumExecution = isFinishedPSumExecution(inputControllerStatusForPEs, weightControllerStatusForPEs);
 
@@ -161,20 +161,34 @@ namespace simulator
 
   void PEArray::decodeValuesToBits(
     std::vector<std::vector<std::deque<FIFOValues>>>& valueFifos,
-    std::vector<std::vector<std::vector<unsigned int>>>& bitRepresentations
+    std::vector<DecodedRegister>& decodedRepresentations
   )
   {
     for (int fifoIndex = 0; fifoIndex < valueFifos.size(); fifoIndex++){
       for (int input_channel = 0; input_channel < num_PE_parallel; input_channel++){
         int val = valueFifos[fifoIndex][input_channel].front().value;
+
+        // negative values transformation. considering future use, we set the isNegatives as vector
+        if (val >= 0){
+          for (int i = 0; i < 8; i++){
+            decodedRepresentations[fifoIndex].isNegatives[input_channel][i] = false;
+          }
+        }
+        else{
+          for (int i = 0; i < 8; i++){
+            decodedRepresentations[fifoIndex].isNegatives[input_channel][i] = true;
+          }
+        }
+
         int bitVectorIndex = 0;
-        for (int i = 7; i >= 0; i--)
+        // i == 7 is sign bit for our case
+        for (int i = 6; i >= 0; i--)
         {
-          // TODO: this is going to be strange when we have negative values
           int mask = 1 << i;
           if ((val & mask) > 0)
           {
-            bitRepresentations[fifoIndex][input_channel][bitVectorIndex] = (unsigned int)(i);
+            decodedRepresentations[fifoIndex].bitInputValues[input_channel][bitVectorIndex] = (unsigned int)(i);
+            decodedRepresentations[fifoIndex].isValids[input_channel][bitVectorIndex] = true;
             bitVectorIndex++;
           }
         }
@@ -183,9 +197,9 @@ namespace simulator
   };
 
   void PEArray::createInputForPEsBasedOnControllerStatus(
-    std::vector<std::vector<std::vector<unsigned int>>>& bitRepresentations,
+    std::vector<DecodedRegister>& decodedRegisters,
     std::vector<PEControllerStatus>& controllerStatusForPEs,
-    std::vector<std::vector<unsigned int>>& representationsForPEs,
+    std::vector<PEInput>& representationsForPEs,
     int num_Fifo
   )
   {
@@ -194,11 +208,13 @@ namespace simulator
       for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
         if(controllerStatus.isWaiting[bitIndex]){
           // when waiting for next value
-          representationsForPEs[fifoIndex][bitIndex] = 0;
+          representationsForPEs[fifoIndex].isValid[bitIndex] = false;
         }
         else{
-          representationsForPEs[fifoIndex][bitIndex] =
-              (unsigned int)bitRepresentations[fifoIndex][bitIndex][controllerStatus.nextProcessIndex[bitIndex]];
+          int processIndex = controllerStatus.nextProcessIndex[bitIndex];
+          representationsForPEs[fifoIndex].bitInputValue[bitIndex] = decodedRegisters[fifoIndex].bitInputValues[bitIndex][processIndex];
+          representationsForPEs[fifoIndex].isNegative[bitIndex] = decodedRegisters[fifoIndex].isNegatives[bitIndex][processIndex];
+          representationsForPEs[fifoIndex].isValid[bitIndex] = decodedRegisters[fifoIndex].isValids[bitIndex][processIndex];
         }
       }
     }
@@ -209,8 +225,8 @@ namespace simulator
     std::vector<PEControllerStatus>& weightControllerStatusForPEs,
     std::vector<std::vector<std::deque<FIFOValues>>>& inputValuesFifos,
     std::vector<std::vector<std::deque<FIFOValues>>>& weightValuesFifos,
-    std::vector<std::vector<std::vector<unsigned int>>>& bitInputs,
-    std::vector<std::vector<std::vector<unsigned int>>>& bitWeights
+    std::vector<PEInput>& inputsForPEs,
+    std::vector<PEInput>& weightsForPEs
   )
   {
     auto newInputControllerStatusForPEs = std::vector<PEControllerStatus>(num_PE_width);
@@ -221,7 +237,8 @@ namespace simulator
       for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
         int nextProcessIndex = inputControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex] + 1;
         newInputControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex] = nextProcessIndex;
-        newInputControllerStatusForPEs[fifoIndex].isWaiting[bitIndex] = nextProcessIndex < bitInputs[fifoIndex][bitIndex].size();
+        // check we should wait or not
+        newInputControllerStatusForPEs[fifoIndex].isWaiting[bitIndex] = !inputsForPEs[fifoIndex].isNegative[bitIndex];
       }
     }
 
@@ -238,7 +255,7 @@ namespace simulator
           int nextProcessIndex = weightControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex] + 1;
           newWeightControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex] = nextProcessIndex;
 
-          bool weightFifoWaiting = nextProcessIndex >= bitWeights[fifoIndex][bitIndex].size();
+          bool weightFifoWaiting = !weightsForPEs[fifoIndex].isNegative[bitIndex];
           newWeightControllerStatusForPEs[fifoIndex].isWaiting[bitIndex] = weightFifoWaiting;
 
           // we need to update the status for input controller if new weight bit is produced

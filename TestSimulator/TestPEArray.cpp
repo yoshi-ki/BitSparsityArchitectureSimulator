@@ -37,28 +37,28 @@ namespace simulator::tests
     ASSERT_THAT(0, Eq(0));
 	}
 
-  TEST(PEArrayTests, decodeValuesToBits){
-    auto valueFifos = v<v<std::deque<FIFOValues>>>(num_PE_width, v<std::deque<FIFOValues>>(num_PE_parallel));
-    auto bitInputs = v<v<v<unsigned int>>>(num_PE_width, v<v<unsigned int>>(num_PE_parallel, v<unsigned int>(num_bit_size)));
-    for (int memoryIndex = 0; memoryIndex < num_PE_width; memoryIndex++){
-      for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
-        for (int i = 0; i < 4; i++)
-        {
-          valueFifos[memoryIndex][bitIndex].push_back(FIFOValues{5,false});
-        }
-      }
-    }
-    auto peArray = PEArray();
-    peArray.decodeValuesToBits(valueFifos, bitInputs);
-    // std::cout << "actual" << bitInputs[0][0][0] << std::endl;
-    for (int memoryIndex = 0; memoryIndex < num_PE_width; memoryIndex++){
-      for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
-        ASSERT_THAT(bitInputs[memoryIndex][bitIndex][0], Eq(2)); // for 4
-        ASSERT_THAT(bitInputs[memoryIndex][bitIndex][1], Eq(0)); // for 1
-        ASSERT_THAT(bitInputs[memoryIndex][bitIndex][2], Eq(0)); // for nothing (for just now and needs to be updated)
-      }
-    }
-  }
+  // TEST(PEArrayTests, decodeValuesToBits){
+  //   auto valueFifos = v<v<std::deque<FIFOValues>>>(num_PE_width, v<std::deque<FIFOValues>>(num_PE_parallel));
+  //   auto bitInputs = v<v<v<unsigned int>>>(num_PE_width, v<v<unsigned int>>(num_PE_parallel, v<unsigned int>(num_bit_size)));
+  //   for (int memoryIndex = 0; memoryIndex < num_PE_width; memoryIndex++){
+  //     for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
+  //       for (int i = 0; i < 4; i++)
+  //       {
+  //         valueFifos[memoryIndex][bitIndex].push_back(FIFOValues{5,false});
+  //       }
+  //     }
+  //   }
+  //   auto peArray = PEArray();
+  //   peArray.decodeValuesToBits(valueFifos, bitInputs);
+  //   // std::cout << "actual" << bitInputs[0][0][0] << std::endl;
+  //   for (int memoryIndex = 0; memoryIndex < num_PE_width; memoryIndex++){
+  //     for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
+  //       ASSERT_THAT(bitInputs[memoryIndex][bitIndex][0], Eq(2)); // for 4
+  //       ASSERT_THAT(bitInputs[memoryIndex][bitIndex][1], Eq(0)); // for 1
+  //       ASSERT_THAT(bitInputs[memoryIndex][bitIndex][2], Eq(0)); // for nothing (for just now and needs to be updated)
+  //     }
+  //   }
+  // }
 
   TEST(PEArrayTests, ExecuteMockConv){
     int num_input_channel=16;

@@ -16,13 +16,14 @@ namespace simulator::tests
   TEST(PETest, NormalAddition) {
 		simulator::PE pe = simulator::PE();
     // 1 step
-    auto a = std::vector<unsigned int>{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-    auto b = std::vector<unsigned int>{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    auto a = PEInput{std::vector<unsigned int>{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}, v<bool>(num_PE_parallel), v<bool>(num_PE_parallel, true)};
+    auto b = PEInput{std::vector<unsigned int>{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, v<bool>(num_PE_parallel), v<bool>(num_PE_parallel, true)};
     pe.execute_one_step(a, b);
 
     // 2 step
-    auto c = std::vector<unsigned int>{1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1};
-    auto d = std::vector<unsigned int>{1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1};
+    auto c = PEInput{std::vector<unsigned int>{1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1}, v<bool>(num_PE_parallel), v<bool>(num_PE_parallel, true)};
+    auto d = PEInput{std::vector<unsigned int>{1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1}, v<bool>(num_PE_parallel), v<bool>(num_PE_parallel, true)};
     pe.execute_one_step(c, d);
     ASSERT_THAT(pe.get_psum(), Eq(44));
   }

@@ -23,6 +23,20 @@ namespace simulator
     bool isLast;
   };
 
+  struct DecodedRegister{
+    // it is for 16 inputs and values just decoded
+    std::vector<std::vector<unsigned int>> bitInputValues;
+    std::vector<std::vector<bool>> isNegatives;
+    std::vector<std::vector<bool>> isValids;
+  };
+
+  struct PEInput{
+    // it is for 16 inputs
+    std::vector<unsigned int> bitInputValue;
+    std::vector<bool> isNegative;
+    std::vector<bool> isValid;
+  };
+
   class PEArray
   {
     public:
@@ -58,8 +72,8 @@ namespace simulator
       std::vector<std::vector<std::deque<FIFOValues>>> weightValuesFifos;
 
       // bit fifos
-      std::vector<std::vector<std::vector<unsigned int>>> bitInputs;
-      std::vector<std::vector<std::vector<unsigned int>>> bitWeights;
+      std::vector<DecodedRegister> decodedInputs;
+      std::vector<DecodedRegister> decodedWeights;
 
       // states to control PEs
       // std::vector<bool> isInputFifoWaiting;
@@ -109,13 +123,13 @@ namespace simulator
 
       void decodeValuesToBits(
         std::vector<std::vector<std::deque<FIFOValues>>> &valueFifos,
-        std::vector<std::vector<std::vector<unsigned int>>>& bitRepresentations
+        std::vector<DecodedRegister>& decodedRepresentations
       );
 
       void createInputForPEsBasedOnControllerStatus(
-        std::vector<std::vector<std::vector<unsigned int>>>& bitRepresentations,
+        std::vector<DecodedRegister>& decodedRegisters,
         std::vector<PEControllerStatus>& controllerStatusForPEs,
-        std::vector<std::vector<unsigned int>>& representationsForPEs,
+        std::vector<PEInput>& representationsForPEs,
         int num_Fifo
       );
 
@@ -124,8 +138,8 @@ namespace simulator
         std::vector<PEControllerStatus> &weightControllerStatusForPEs,
         std::vector<std::vector<std::deque<FIFOValues>>> &inputValuesFifos,
         std::vector<std::vector<std::deque<FIFOValues>>> &weightValuesFifos,
-        std::vector<std::vector<std::vector<unsigned int>>> &bitInputs,
-        std::vector<std::vector<std::vector<unsigned int>>> &bitWeights
+        std::vector<PEInput> &decodedInputs,
+        std::vector<PEInput> &decodedWeights
       );
 
       void updatePEStatusWhenPsumFinish(

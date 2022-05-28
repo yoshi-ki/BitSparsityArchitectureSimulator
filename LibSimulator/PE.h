@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include "PEArray.h"
 
 namespace simulator
 {
@@ -15,8 +16,8 @@ namespace simulator
       // input: 3bit unsigned * 16 * 2
       // output: 22bit signed
       int execute_one_step(
-        std::vector<unsigned int>& bitActivations,
-        std::vector<unsigned int>& bitWeights
+        PEInput bitActivations,
+        PEInput bitWeights
       );
 
       // for test and mock

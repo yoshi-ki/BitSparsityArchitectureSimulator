@@ -9,16 +9,16 @@ namespace simulator
   }
 
   int PE::execute_one_step(
-    std::vector<unsigned int>& bitActivations,
-    std::vector<unsigned int>& bitWeights
+    PEInput bitActivations,
+    PEInput bitWeights
   )
   {
-    for (int i = 0; i < bitActivations.size(); i++){
-      if (bitActivations[i] >= 8 || bitWeights[i] >= 8){
+    for (int i = 0; i < bitActivations.bitInputValue.size(); i++){
+      if (bitActivations.bitInputValue[i] >= 8 || bitWeights.bitInputValue[i] >= 8){
         throw std::runtime_error("error!");
       }
       // TODO: change this to 22 bit integer
-      psum += (int)(bitActivations[i] + bitWeights[i]);
+      psum += (int)(bitActivations.bitInputValue[i] + bitWeights.bitInputValue[i]);
     }
     return psum;
   }
