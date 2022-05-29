@@ -13,12 +13,18 @@ namespace simulator
     PEInput bitWeights
   )
   {
-    for (int i = 0; i < bitActivations.bitInputValue.size(); i++){
+    // compute 16 multiplications
+    for (int i = 0; i < num_PE_parallel; i++){
       if (bitActivations.bitInputValue[i] >= 8 || bitWeights.bitInputValue[i] >= 8){
         throw std::runtime_error("error!");
       }
-      // TODO: change this to 22 bit integer
-      psum += (int)(bitActivations.bitInputValue[i] + bitWeights.bitInputValue[i]);
+      if (bitActivations.isValid[i] && bitWeights.isValid[i]){
+        // TODO: change this to 22 bit integer
+        auto multIsNegative = bitActivations.isNegative[i] ^ bitWeights.isNegative[i];
+        auto multExp = bitActivations.bitInputValue[i] + bitWeights.bitInputValue[i];
+        psum += multIsNegative ? (-(1 << multExp)) : (1 << multExp);
+        // std::cout << psum << std::endl;
+      }
     }
     return psum;
   }

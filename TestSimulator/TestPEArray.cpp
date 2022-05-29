@@ -37,28 +37,32 @@ namespace simulator::tests
     ASSERT_THAT(0, Eq(0));
 	}
 
-  // TEST(PEArrayTests, decodeValuesToBits){
-  //   auto valueFifos = v<v<std::deque<FIFOValues>>>(num_PE_width, v<std::deque<FIFOValues>>(num_PE_parallel));
-  //   auto bitInputs = v<v<v<unsigned int>>>(num_PE_width, v<v<unsigned int>>(num_PE_parallel, v<unsigned int>(num_bit_size)));
-  //   for (int memoryIndex = 0; memoryIndex < num_PE_width; memoryIndex++){
-  //     for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
-  //       for (int i = 0; i < 4; i++)
-  //       {
-  //         valueFifos[memoryIndex][bitIndex].push_back(FIFOValues{5,false});
-  //       }
-  //     }
-  //   }
-  //   auto peArray = PEArray();
-  //   peArray.decodeValuesToBits(valueFifos, bitInputs);
-  //   // std::cout << "actual" << bitInputs[0][0][0] << std::endl;
-  //   for (int memoryIndex = 0; memoryIndex < num_PE_width; memoryIndex++){
-  //     for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
-  //       ASSERT_THAT(bitInputs[memoryIndex][bitIndex][0], Eq(2)); // for 4
-  //       ASSERT_THAT(bitInputs[memoryIndex][bitIndex][1], Eq(0)); // for 1
-  //       ASSERT_THAT(bitInputs[memoryIndex][bitIndex][2], Eq(0)); // for nothing (for just now and needs to be updated)
-  //     }
-  //   }
-  // }
+  TEST(PEArrayTests, decodeValuesToBits){
+    auto valueFifos = v<v<std::deque<FIFOValues>>>(num_PE_width, v<std::deque<FIFOValues>>(num_PE_parallel));
+    auto decodedInputs = v<DecodedRegister>(num_PE_width, DecodedRegister{v<v<unsigned int>>(num_PE_parallel, v<unsigned>(num_PE_parallel)), v<v<bool>>(num_PE_parallel, v<bool>(8)), v<v<bool>>(num_PE_parallel, v<bool>(8))});
+    for (int memoryIndex = 0; memoryIndex < num_PE_width; memoryIndex++){
+      for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
+        for (int i = 0; i < 4; i++)
+        {
+          valueFifos[memoryIndex][bitIndex].push_back(FIFOValues{5,false});
+        }
+      }
+    }
+    auto peArray = PEArray();
+    peArray.decodeValuesToBits(valueFifos, decodedInputs);
+    // std::cout << "actual" << bitInputs[0][0][0] << std::endl;
+    for (int memoryIndex = 0; memoryIndex < num_PE_width; memoryIndex++){
+      for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
+        ASSERT_THAT(decodedInputs[memoryIndex].bitInputValues[bitIndex][0], Eq(2)); // for 4
+        ASSERT_THAT(decodedInputs[memoryIndex].isNegatives[bitIndex][0], false); // for 4
+        ASSERT_THAT(decodedInputs[memoryIndex].isValids[bitIndex][0], true); // for 4
+        ASSERT_THAT(decodedInputs[memoryIndex].bitInputValues[bitIndex][1], Eq(0)); // for 1
+        ASSERT_THAT(decodedInputs[memoryIndex].isNegatives[bitIndex][1], false); // for 1
+        ASSERT_THAT(decodedInputs[memoryIndex].isValids[bitIndex][1], true); // for 1
+        ASSERT_THAT(decodedInputs[memoryIndex].isValids[bitIndex][2], false); // for nothing (for just now and needs to be updated)
+      }
+    }
+  }
 
   TEST(PEArrayTests, ExecuteMockConv){
     int num_input_channel=16;

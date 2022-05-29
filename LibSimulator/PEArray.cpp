@@ -145,6 +145,7 @@ namespace simulator
     std::vector<PEControllerStatus>& weightControllerStatusForPEs
   )
   {
+    // if all psum finished equal true
     bool isFinished = true;
     for (int i = 0; i < inputControllerStatusForPEs.size(); i++){
       for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
@@ -232,31 +233,43 @@ namespace simulator
     auto newInputControllerStatusForPEs = std::vector<PEControllerStatus>(num_PE_width);
     auto newWeightControllerStatusForPEs = std::vector<PEControllerStatus>(num_PE_height);
 
-    // create new input controller status
+    // stage1: create new input controller status only by the last input controller status
     for (int fifoIndex = 0; fifoIndex < num_PE_width; fifoIndex++){
       for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
-        int nextProcessIndex = inputControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex] + 1;
+        int nowProcessIndex = inputControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex];
+        bool isValidNow = inputsForPEs[fifoIndex].isValid[nowProcessIndex];
+
+        // if the processed valus is valid, we should take a look at the next value
+        int nextProcessIndex = isValidNow ? nowProcessIndex + 1 : nowProcessIndex;
         newInputControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex] = nextProcessIndex;
-        // check we should wait or not
-        newInputControllerStatusForPEs[fifoIndex].isWaiting[bitIndex] = !inputsForPEs[fifoIndex].isNegative[bitIndex];
+        newInputControllerStatusForPEs[fifoIndex].isWaiting[bitIndex] = !inputsForPEs[fifoIndex].isValid[nextProcessIndex];
+
+        // we do not change the status for finishedPsum here.
+        newInputControllerStatusForPEs[fifoIndex].finishedPSum[bitIndex] = inputControllerStatusForPEs[fifoIndex].finishedPSum[bitIndex];
       }
     }
 
-    // create new weight controller status
+    // Stage 2: create new weight controller status
     for (int fifoIndex = 0; fifoIndex < num_PE_height; fifoIndex++){
       for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
+        // decide we should consume next bit values. we should consume next bit when all the num_PE_width input fifos are waiting.
         bool weightForThisBitNext = true;
         for (int inputFifoIndex = 0; inputFifoIndex < num_PE_width; inputFifoIndex++)
         {
           weightForThisBitNext = weightForThisBitNext && newInputControllerStatusForPEs[inputFifoIndex].isWaiting[bitIndex];
         }
+
         if (weightForThisBitNext){
           // we will consume weight next bit from the next cycle
-          int nextProcessIndex = weightControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex] + 1;
+          int nowProcessIndex = weightControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex];
+          bool isValidNow = weightsForPEs[fifoIndex].isValid[nowProcessIndex];
+          int nextProcessIndex = isValidNow ? nowProcessIndex + 1 : nowProcessIndex;
           newWeightControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex] = nextProcessIndex;
 
-          bool weightFifoWaiting = !weightsForPEs[fifoIndex].isNegative[bitIndex];
+          bool weightFifoWaiting = !weightsForPEs[fifoIndex].isValid[nextProcessIndex];
           newWeightControllerStatusForPEs[fifoIndex].isWaiting[bitIndex] = weightFifoWaiting;
+
+          newWeightControllerStatusForPEs[fifoIndex].finishedPSum[bitIndex] = weightControllerStatusForPEs[fifoIndex].finishedPSum[bitIndex];
 
           // we need to update the status for input controller if new weight bit is produced
           if (!weightFifoWaiting){
