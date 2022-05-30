@@ -40,6 +40,7 @@ namespace simulator::tests
   TEST(PEArrayTests, decodeValuesToBits){
     auto valueFifos = v<v<std::deque<FIFOValues>>>(num_PE_width, v<std::deque<FIFOValues>>(num_PE_parallel));
     auto decodedInputs = v<DecodedRegister>(num_PE_width, DecodedRegister{v<v<unsigned int>>(num_PE_parallel, v<unsigned>(num_PE_parallel)), v<v<bool>>(num_PE_parallel, v<bool>(8)), v<v<bool>>(num_PE_parallel, v<bool>(8))});
+    // input 5
     for (int memoryIndex = 0; memoryIndex < num_PE_width; memoryIndex++){
       for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
         for (int i = 0; i < 4; i++)
@@ -58,6 +59,31 @@ namespace simulator::tests
         ASSERT_THAT(decodedInputs[memoryIndex].isValids[bitIndex][0], true); // for 4
         ASSERT_THAT(decodedInputs[memoryIndex].bitInputValues[bitIndex][1], Eq(0)); // for 1
         ASSERT_THAT(decodedInputs[memoryIndex].isNegatives[bitIndex][1], false); // for 1
+        ASSERT_THAT(decodedInputs[memoryIndex].isValids[bitIndex][1], true); // for 1
+        ASSERT_THAT(decodedInputs[memoryIndex].isValids[bitIndex][2], false); // for nothing (for just now and needs to be updated)
+      }
+    }
+
+    // input -3
+    valueFifos = v<v<std::deque<FIFOValues>>>(num_PE_width, v<std::deque<FIFOValues>>(num_PE_parallel));
+    decodedInputs = v<DecodedRegister>(num_PE_width, DecodedRegister{v<v<unsigned int>>(num_PE_parallel, v<unsigned>(num_PE_parallel)), v<v<bool>>(num_PE_parallel, v<bool>(8)), v<v<bool>>(num_PE_parallel, v<bool>(8))});
+    for (int memoryIndex = 0; memoryIndex < num_PE_width; memoryIndex++){
+      for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
+        for (int i = 0; i < 4; i++)
+        {
+          valueFifos[memoryIndex][bitIndex].push_back(FIFOValues{-3,false});
+        }
+      }
+    }
+    peArray.decodeValuesToBits(valueFifos, decodedInputs);
+    // std::cout << "actual" << bitInputs[0][0][0] << std::endl;
+    for (int memoryIndex = 0; memoryIndex < num_PE_width; memoryIndex++){
+      for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
+        ASSERT_THAT(decodedInputs[memoryIndex].bitInputValues[bitIndex][0], Eq(1)); // for 2
+        ASSERT_THAT(decodedInputs[memoryIndex].isNegatives[bitIndex][0], true); // for 2
+        ASSERT_THAT(decodedInputs[memoryIndex].isValids[bitIndex][0], true); // for 2
+        ASSERT_THAT(decodedInputs[memoryIndex].bitInputValues[bitIndex][1], Eq(0)); // for 1
+        ASSERT_THAT(decodedInputs[memoryIndex].isNegatives[bitIndex][1], true); // for 1
         ASSERT_THAT(decodedInputs[memoryIndex].isValids[bitIndex][1], true); // for 1
         ASSERT_THAT(decodedInputs[memoryIndex].isValids[bitIndex][2], false); // for nothing (for just now and needs to be updated)
       }
@@ -86,6 +112,8 @@ namespace simulator::tests
     makeRandomInput(inputMemories, inputValues, num_input_channel, num_input_height, num_input_width, availableValueSet);
     makeRandomWeight(weightMemories, weightValues, num_kernel_height, num_kernel_width, num_input_channel, num_output_channel, availableValueSet);
     computeConv(inputValues, weightValues, outputValues, stride);
+
+    std::cout << inputMemories[0][0][0][0][0] << std::endl;
 
     simulator::PEArray peArray = simulator::PEArray(
       inputMemories,
