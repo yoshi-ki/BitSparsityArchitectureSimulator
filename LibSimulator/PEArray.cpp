@@ -103,7 +103,7 @@ namespace simulator
     }
 
     // update pe status
-    updatePEStatus(inputControllerStatusForPEs, weightControllerStatusForPEs, inputValuesFifos, weightValuesFifos, inputsForPEs, weightsForPEs);
+    updatePEStatus(inputControllerStatusForPEs, weightControllerStatusForPEs, inputValuesFifos, weightValuesFifos, decodedInputs, decodedWeights);
 
     bool finishedPsumExecution = isFinishedPSumExecution(inputControllerStatusForPEs, weightControllerStatusForPEs);
 
@@ -235,8 +235,8 @@ namespace simulator
     std::vector<PEControllerStatus>& weightControllerStatusForPEs,
     std::vector<std::vector<std::deque<FIFOValues>>>& inputValuesFifos,
     std::vector<std::vector<std::deque<FIFOValues>>>& weightValuesFifos,
-    std::vector<PEInput>& inputsForPEs,
-    std::vector<PEInput>& weightsForPEs
+    std::vector<DecodedRegister>& decodedInputs,
+    std::vector<DecodedRegister>& decodedWeights
   )
   {
     auto newInputControllerStatusForPEs = std::vector<PEControllerStatus>(num_PE_width);
@@ -246,12 +246,18 @@ namespace simulator
     for (int fifoIndex = 0; fifoIndex < num_PE_width; fifoIndex++){
       for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
         int nowProcessIndex = inputControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex];
-        bool isValidNow = inputsForPEs[fifoIndex].isValid[nowProcessIndex];
+        bool isValidNow = decodedInputs[fifoIndex].isValids[bitIndex][nowProcessIndex];
 
         // if the processed valus is valid, we should take a look at the next value
         int nextProcessIndex = isValidNow ? nowProcessIndex + 1 : nowProcessIndex;
         newInputControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex] = nextProcessIndex;
-        newInputControllerStatusForPEs[fifoIndex].isWaiting[bitIndex] = !inputsForPEs[fifoIndex].isValid[nextProcessIndex];
+        newInputControllerStatusForPEs[fifoIndex].isWaiting[bitIndex] = !decodedInputs[fifoIndex].isValids[bitIndex][nextProcessIndex];
+        // std::cout << inputsForPEs[0].isValid[0] << std::endl;
+        // std::cout << inputsForPEs[0].isValid[1] << std::endl;
+        // std::cout << inputsForPEs[0].bitInputValue[0] << std::endl;
+        // std::cout << inputsForPEs[0].bitInputValue[1] << std::endl;
+
+        // std::cout << "iswaiting" << nextProcessIndex  << " " << !decodedInputs[fifoIndex].isValids[bitIndex][nextProcessIndex] << std::endl;
 
         // we do not change the status for finishedPsum here.
         newInputControllerStatusForPEs[fifoIndex].finishedPSum[bitIndex] = inputControllerStatusForPEs[fifoIndex].finishedPSum[bitIndex];
@@ -271,11 +277,11 @@ namespace simulator
         if (weightForThisBitNext){
           // we will consume weight next bit from the next cycle
           int nowProcessIndex = weightControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex];
-          bool isValidNow = weightsForPEs[fifoIndex].isValid[nowProcessIndex];
+          bool isValidNow = decodedWeights[fifoIndex].isValids[bitIndex][nowProcessIndex];
           int nextProcessIndex = isValidNow ? nowProcessIndex + 1 : nowProcessIndex;
           newWeightControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex] = nextProcessIndex;
 
-          bool weightFifoWaiting = !weightsForPEs[fifoIndex].isValid[nextProcessIndex];
+          bool weightFifoWaiting = !decodedWeights[fifoIndex].isValids[bitIndex][nextProcessIndex];
           newWeightControllerStatusForPEs[fifoIndex].isWaiting[bitIndex] = weightFifoWaiting;
 
           // we need to update the status for input controller if new weight bit is produced

@@ -138,8 +138,8 @@ namespace simulator
         std::vector<PEControllerStatus> &weightControllerStatusForPEs,
         std::vector<std::vector<std::deque<FIFOValues>>> &inputValuesFifos,
         std::vector<std::vector<std::deque<FIFOValues>>> &weightValuesFifos,
-        std::vector<PEInput> &decodedInputs,
-        std::vector<PEInput> &decodedWeights
+        std::vector<DecodedRegister> &decodedInputs,
+        std::vector<DecodedRegister> &decodedWeights
       );
 
       void updatePEStatusWhenPsumFinish(
