@@ -8,7 +8,7 @@ namespace simulator
   // bool that represents the PE Array is computing now or not
 
   // PE Array
-  std::vector<std::vector<simulator::PE>> PEs(num_PE_height, std::vector<simulator::PE>(num_PE_width));
+  std::vector<std::vector<simulator::PE>> PEs(num_PE_height, std::vector<simulator::PE>(num_PE_width, PE()));
 
   // for unit test
   PEArray::PEArray(){};
@@ -40,8 +40,8 @@ namespace simulator
 
     outputMemory = std::vector<std::vector<std::vector<int>>>(num_output_channel, std::vector<std::vector<int>>(output_height, std::vector<int>(output_width)));
 
-    inputValuesFifos = std::vector<std::vector<std::deque<FIFOValues>>>(num_PE_width, std::vector<std::deque<FIFOValues>>(num_PE_parallel));
-    weightValuesFifos = std::vector<std::vector<std::deque<FIFOValues>>> (num_PE_height, std::vector<std::deque<FIFOValues>>(num_PE_parallel));
+    inputValuesFifos = std::vector<std::vector<std::deque<FIFOValues>>>(num_PE_width, std::vector<std::deque<FIFOValues>>(num_PE_parallel, std::deque<FIFOValues>()));
+    weightValuesFifos = std::vector<std::vector<std::deque<FIFOValues>>> (num_PE_height, std::vector<std::deque<FIFOValues>>(num_PE_parallel, std::deque<FIFOValues>()));
 
     // convert input activation and weight to the bit format,
     // because we only need bit format value
@@ -51,17 +51,16 @@ namespace simulator
     // Initialize states to control PEs
     inputControllerStatusForPEs = std::vector<PEControllerStatus>(num_PE_width);
     weightControllerStatusForPEs = std::vector<PEControllerStatus>(num_PE_height);
-
-    // Initialize bit representations vector. 8 is for the max bit size of the value
-    decodedInputs = v<DecodedRegister>(num_PE_width, DecodedRegister{v<v<unsigned int>>(num_PE_parallel, v<unsigned>(num_PE_parallel)), v<v<bool>>(num_PE_parallel, v<bool>(8)), v<v<bool>>(num_PE_parallel, v<bool>(8))});
-    decodedWeights = v<DecodedRegister>(num_PE_height, DecodedRegister{v<v<unsigned int>>(num_PE_parallel, v<unsigned>(num_PE_parallel)), v<v<bool>>(num_PE_parallel, v<bool>(8)), v<v<bool>>(num_PE_parallel, v<bool>(8))});
   }
 
   bool PEArray::execute_one_step()
   {
+    std::cout << "input fifo count: " << inputValuesFifos[0][0].size() << "first value: " << inputValuesFifos[0][0].front().value << std::endl;
+    std::cout << "weight fifo count: " << weightValuesFifos[7][0].size() << "weight value: " << weightValuesFifos[0][0].front().value << std::endl;
     // if all of the value fifos become empty, we finish execution
     if(isLayerFinished(inputValuesFifos, weightValuesFifos)){
       // output for debug
+      std::cout << "finished layer execution" << std::endl;
       // for (int output_channel = 0; output_channel < num_output_channel; output_channel++){
       //   for (int output_heigh = 0; output_heigh < output_height; output_heigh++){
       //     for (int output_widt = 0; output_widt < output_width; output_widt++){
@@ -73,6 +72,9 @@ namespace simulator
       return busy;
     }
 
+    // Initialize bit representations vector. 8 is for the max bit size of the value
+    decodedInputs = v<DecodedRegister>(num_PE_width, DecodedRegister{v<v<unsigned int>>(num_PE_parallel, v<unsigned>(num_PE_parallel)), v<v<bool>>(num_PE_parallel, v<bool>(8)), v<v<bool>>(num_PE_parallel, v<bool>(8))});
+    decodedWeights = v<DecodedRegister>(num_PE_height, DecodedRegister{v<v<unsigned int>>(num_PE_parallel, v<unsigned>(num_PE_parallel)), v<v<bool>>(num_PE_parallel, v<bool>(8)), v<v<bool>>(num_PE_parallel, v<bool>(8))});
     // decode values (this circuit always run) (just look at the first element and do not change fifo)
     decodeValuesToBits(inputValuesFifos, decodedInputs);
     decodeValuesToBits(weightValuesFifos, decodedWeights);
@@ -90,12 +92,19 @@ namespace simulator
     for (int h = 0; h < num_PE_height; h++){
       for (int w = 0; w < num_PE_width; w++){
         outputOfPEs[h][w] = PEs[h][w].execute_one_step(inputsForPEs[w], weightsForPEs[h]);
-        std::cout << h << " " << w << " " << outputOfPEs[h][w] << std::endl;
+        // std::cout << h << " " << w << " " << outputOfPEs[h][w] << std::endl;
+        if (h == 2 && w == 2){
+          std::cout << "input" << inputValuesFifos[h][w].front().value << std::endl;
+          std::cout << "input: " << inputsForPEs[w].bitInputValue[0] << "isNegative: " << inputsForPEs[w].isNegative[0] << "isValid: " << inputsForPEs[w].isValid[0] << std::endl;
+          std::cout << "weight" << weightValuesFifos[h][w].front().value << std::endl;
+          std::cout << "weight: " << weightsForPEs[h].bitInputValue[0] << "isNegative:" << weightsForPEs[h].isNegative[0] << "isValid: " << weightsForPEs[h].isValid[0] << std::endl;
+          std::cout << h << " " << w << " " << outputOfPEs[h][w] << std::endl;
+        }
       }
     }
 
     // update pe status
-    updatePEStatus(inputControllerStatusForPEs, weightControllerStatusForPEs, inputValuesFifos, weightValuesFifos, inputsForPEs, weightsForPEs);
+    updatePEStatus(inputControllerStatusForPEs, weightControllerStatusForPEs, inputValuesFifos, weightValuesFifos, decodedInputs, decodedWeights);
 
     bool finishedPsumExecution = isFinishedPSumExecution(inputControllerStatusForPEs, weightControllerStatusForPEs);
 
@@ -127,13 +136,13 @@ namespace simulator
   )
   {
     bool isFinished = true;
-    for (int i = 0; i < inputFifos.size(); i++){
-      for (int j = 0; j < inputFifos[i].size(); j++){
+    for (int i = 0; i < num_PE_width; i++){
+      for (int j = 0; j < num_PE_parallel; j++){
         isFinished = isFinished && inputFifos[i][j].empty();
       }
     }
-    for (int i = 0; i < weightFifos.size(); i++){
-      for (int j = 0; j < weightFifos[i].size(); j++){
+    for (int i = 0; i < num_PE_height; i++){
+      for (int j = 0; j < num_PE_parallel; j++){
         isFinished = isFinished && weightFifos[i][j].empty();
       }
     }
@@ -147,12 +156,12 @@ namespace simulator
   {
     // if all psum finished equal true
     bool isFinished = true;
-    for (int i = 0; i < inputControllerStatusForPEs.size(); i++){
+    for (int i = 0; i < num_PE_width; i++){
       for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
         isFinished = isFinished && inputControllerStatusForPEs[i].finishedPSum[bitIndex];
       }
     }
-    for (int i = 0; i < weightControllerStatusForPEs.size(); i++){
+    for (int i = 0; i < num_PE_height; i++){
       for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
         isFinished = isFinished && weightControllerStatusForPEs[i].finishedPSum[bitIndex];
       }
@@ -179,6 +188,7 @@ namespace simulator
           for (int i = 0; i < 8; i++){
             decodedRepresentations[fifoIndex].isNegatives[input_channel][i] = true;
           }
+          val = -val;
         }
 
         int bitVectorIndex = 0;
@@ -226,23 +236,29 @@ namespace simulator
     std::vector<PEControllerStatus>& weightControllerStatusForPEs,
     std::vector<std::vector<std::deque<FIFOValues>>>& inputValuesFifos,
     std::vector<std::vector<std::deque<FIFOValues>>>& weightValuesFifos,
-    std::vector<PEInput>& inputsForPEs,
-    std::vector<PEInput>& weightsForPEs
+    std::vector<DecodedRegister>& decodedInputs,
+    std::vector<DecodedRegister>& decodedWeights
   )
   {
     auto newInputControllerStatusForPEs = std::vector<PEControllerStatus>(num_PE_width);
     auto newWeightControllerStatusForPEs = std::vector<PEControllerStatus>(num_PE_height);
 
-    // stage1: create new input controller status only by the last input controller status
+    // Stage 1: create new input controller status only by the last input controller status
     for (int fifoIndex = 0; fifoIndex < num_PE_width; fifoIndex++){
       for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
         int nowProcessIndex = inputControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex];
-        bool isValidNow = inputsForPEs[fifoIndex].isValid[nowProcessIndex];
+        bool isValidNow = decodedInputs[fifoIndex].isValids[bitIndex][nowProcessIndex];
 
         // if the processed valus is valid, we should take a look at the next value
         int nextProcessIndex = isValidNow ? nowProcessIndex + 1 : nowProcessIndex;
         newInputControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex] = nextProcessIndex;
-        newInputControllerStatusForPEs[fifoIndex].isWaiting[bitIndex] = !inputsForPEs[fifoIndex].isValid[nextProcessIndex];
+        newInputControllerStatusForPEs[fifoIndex].isWaiting[bitIndex] = !decodedInputs[fifoIndex].isValids[bitIndex][nextProcessIndex];
+        // std::cout << inputsForPEs[0].isValid[0] << std::endl;
+        // std::cout << inputsForPEs[0].isValid[1] << std::endl;
+        // std::cout << inputsForPEs[0].bitInputValue[0] << std::endl;
+        // std::cout << inputsForPEs[0].bitInputValue[1] << std::endl;
+
+        // std::cout << "iswaiting" << nextProcessIndex  << " " << !decodedInputs[fifoIndex].isValids[bitIndex][nextProcessIndex] << std::endl;
 
         // we do not change the status for finishedPsum here.
         newInputControllerStatusForPEs[fifoIndex].finishedPSum[bitIndex] = inputControllerStatusForPEs[fifoIndex].finishedPSum[bitIndex];
@@ -262,14 +278,12 @@ namespace simulator
         if (weightForThisBitNext){
           // we will consume weight next bit from the next cycle
           int nowProcessIndex = weightControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex];
-          bool isValidNow = weightsForPEs[fifoIndex].isValid[nowProcessIndex];
+          bool isValidNow = decodedWeights[fifoIndex].isValids[bitIndex][nowProcessIndex];
           int nextProcessIndex = isValidNow ? nowProcessIndex + 1 : nowProcessIndex;
           newWeightControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex] = nextProcessIndex;
 
-          bool weightFifoWaiting = !weightsForPEs[fifoIndex].isValid[nextProcessIndex];
+          bool weightFifoWaiting = !decodedWeights[fifoIndex].isValids[bitIndex][nextProcessIndex];
           newWeightControllerStatusForPEs[fifoIndex].isWaiting[bitIndex] = weightFifoWaiting;
-
-          newWeightControllerStatusForPEs[fifoIndex].finishedPSum[bitIndex] = weightControllerStatusForPEs[fifoIndex].finishedPSum[bitIndex];
 
           // we need to update the status for input controller if new weight bit is produced
           if (!weightFifoWaiting){
@@ -280,12 +294,17 @@ namespace simulator
             }
           }
         }
+        else{
+          newWeightControllerStatusForPEs[fifoIndex].isWaiting[bitIndex] = weightControllerStatusForPEs[fifoIndex].isWaiting[bitIndex];
+          newWeightControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex] = weightControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex];
+        }
+        newWeightControllerStatusForPEs[fifoIndex].finishedPSum[bitIndex] = weightControllerStatusForPEs[fifoIndex].finishedPSum[bitIndex];
       }
     }
 
-    // decide we will update the fifo or not
-    bool finishedLayerExecution = false;
+    // Stage 3: decide we will update the fifo or not
     for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
+      // we consume next value for input and weight when all weight FIFO is waiting for next values
       bool updateFifo = true;
       for (int weightFifoIndex = 0; weightFifoIndex < num_PE_height; weightFifoIndex++)
       {
@@ -294,14 +313,16 @@ namespace simulator
 
       // update for activation and weight is done at the same time
       if(updateFifo){
+
+        // update weight FIFO
         for (int weightFifoIndex = 0; weightFifoIndex < num_PE_height; weightFifoIndex++)
         {
           if (!weightValuesFifos[weightFifoIndex][bitIndex].empty()){
             // if the value is the last values of psum, we need to set wait status
-            if (weightControllerStatusForPEs[weightFifoIndex].finishedPSum[bitIndex] ||
-                weightValuesFifos[weightFifoIndex][bitIndex].front().isLast)
+            if (weightValuesFifos[weightFifoIndex][bitIndex].front().isLast)
             {
               newWeightControllerStatusForPEs[weightFifoIndex].finishedPSum[bitIndex] = true;
+              newWeightControllerStatusForPEs[weightFifoIndex].isWaiting[bitIndex] = true;
             }
             else{
               weightValuesFifos[weightFifoIndex][bitIndex].pop_front();
@@ -310,13 +331,15 @@ namespace simulator
             }
           }
         }
+
+        // update input FIFO
         for (int inputFifoIndex = 0; inputFifoIndex < num_PE_width; inputFifoIndex++){
           if (!inputValuesFifos[inputFifoIndex][bitIndex].empty()){
             // if the value is the last values of psum, we need to set wait status
-            if (inputControllerStatusForPEs[inputFifoIndex].finishedPSum[bitIndex] ||
-                inputValuesFifos[inputFifoIndex][bitIndex].front().isLast)
+            if (inputValuesFifos[inputFifoIndex][bitIndex].front().isLast)
             {
               newInputControllerStatusForPEs[inputFifoIndex].finishedPSum[bitIndex] = true;
+              newInputControllerStatusForPEs[inputFifoIndex].isWaiting[bitIndex] = true;
             }
             else{
               inputValuesFifos[inputFifoIndex][bitIndex].pop_front();
@@ -362,7 +385,7 @@ namespace simulator
         weightControllerStatusForPEs[i].nextProcessIndex[bitIndex] = 0;
       }
     }
-    for (int memoryIndex = 0; memoryIndex < inputValuesFifos.size(); memoryIndex++){
+    for (int memoryIndex = 0; memoryIndex < weightValuesFifos.size(); memoryIndex++){
       for (int input_channel = 0; input_channel < num_PE_parallel; input_channel++){
         weightValuesFifos[memoryIndex][input_channel].pop_front();
       }
@@ -382,16 +405,16 @@ namespace simulator
   )
   {
     int iterationForOutputChannelGroup = num_output_channel / num_PE_height + fmin(num_output_channel % num_PE_height, 1);
+    int num_input_channel_group = num_input_channel / num_PE_parallel + fmin(num_input_channel % num_PE_parallel, 1);
     // we need to set the same values to fifo for different output channel groups
     for (int iter = 0; iter < iterationForOutputChannelGroup; iter++){
-      int num_input_channel_group = num_input_channel / num_PE_parallel + fmin(num_input_channel % num_PE_parallel, 1);
       for (int memoryIndex = 0; memoryIndex < inputMemories.size(); memoryIndex++){
         // input is divided into four areas, so we need to compute the size of the each areas
         int partialInputHeight = (memoryIndex == 0 || memoryIndex == 3) ? input_height / 2 + input_height % 2 : input_height / 2;
         int partialInputWidth = (memoryIndex == 0 || memoryIndex == 2) ? input_width / 2 + input_width % 2 : input_width / 2;
         // start position of window
-        for (int windowStartHeight = 0; windowStartHeight < partialInputHeight - kernel_height + 1; windowStartHeight++){
-          for (int windowStartWidth = 0; windowStartWidth < partialInputWidth - kernel_width + 1; windowStartWidth++){
+        for (int windowStartHeight = 0; windowStartHeight < partialInputHeight - kernel_height + 1; windowStartHeight = windowStartHeight + stride){
+          for (int windowStartWidth = 0; windowStartWidth < partialInputWidth - kernel_width + 1; windowStartWidth = windowStartWidth + stride){
             for (int kh = 0; kh < kernel_height; kh++){
               for (int kw = 0; kw < kernel_width; kw++){
                 for (int channelGroup = 0; channelGroup < num_input_channel_group; channelGroup++){
@@ -399,8 +422,11 @@ namespace simulator
                   for (int input_channel = 0; input_channel < num_PE_parallel; input_channel++){
                     inputValuesFifos[memoryIndex][input_channel].push_back(
                         FIFOValues{
-                            inputMemories[memoryIndex][windowStartHeight + kernel_height][windowStartWidth + kernel_width][channelGroup][input_channel],
+                            inputMemories[memoryIndex][windowStartHeight + kh][windowStartWidth + kw][channelGroup][input_channel],
                             false});
+                    // if (input_channel == 0){
+                    //   std::cout << inputValuesFifos[memoryIndex][input_channel].end()->value << std::endl;
+                    // }
                   }
                 }
               }
@@ -415,7 +441,7 @@ namespace simulator
           }
 
           auto lastVal = inputValuesFifos[memoryIndex][input_channel].back();
-          lastVal.value = true;
+          lastVal.isLast= true;
           inputValuesFifos[memoryIndex][input_channel].pop_back();
           inputValuesFifos[memoryIndex][input_channel].push_back(lastVal);
         }
@@ -468,7 +494,7 @@ namespace simulator
           continue;
         }
         auto lastVal = weightValuesFifos[memoryIndex][input_channel].back();
-        lastVal.value = true;
+        lastVal.isLast = true;
         weightValuesFifos[memoryIndex][input_channel].pop_back();
         weightValuesFifos[memoryIndex][input_channel].push_back(lastVal);
       }
@@ -489,12 +515,21 @@ namespace simulator
       for (int w = 0; w < num_PE_width; w++){
         // (for (w, h))
         int thisGroupWidth = output_width / 2 + ((w % 2 == 0) ? output_width % 2 : 0);
-        int thisGroupHight = output_height / 2 + ((h % 2 == 0) ? output_height % 2 : 0);
+        int thisGroupHight = output_height / 2 + ((w / 2 == 0) ? output_height % 2 : 0);
+
         int outputChannelGroup = outputStatus / (thisGroupHight * thisGroupWidth); // TODO: we might have strange thing if we have different timing for the end of output channel
         int outputPositionIndex = outputStatus % (thisGroupHight * thisGroupWidth);
+
         int writeOutputChannel = h + num_PE_height * outputChannelGroup;
-        int writeOutputHeight = outputPositionIndex / thisGroupWidth;
-        int writeOutputWidth = outputPositionIndex % thisGroupWidth;
+
+        int writeOutputHeightPrefix = (w / 2 == 0) ? 0 : output_width - thisGroupWidth;
+        int writeOutputHeight = writeOutputHeightPrefix + outputPositionIndex / thisGroupWidth;
+
+        int writeOutputWidthPrefix = (w % 2 == 0) ? 0 : output_height - thisGroupHight;
+        int writeOutputWidth = writeOutputWidthPrefix + outputPositionIndex % thisGroupWidth;
+        // std::cout << writeOutputChannel << " " << writeOutputHeight << " " << writeOutputWidth << std::endl;
+        // std::cout << outputOfPEs[h][w] << std::endl;
+        // std::cout << outputMemory[writeOutputChannel][writeOutputHeight][writeOutputWidth] << std::endl;
         outputMemory[writeOutputChannel][writeOutputHeight][writeOutputWidth] = outputOfPEs[h][w];
       }
     }
