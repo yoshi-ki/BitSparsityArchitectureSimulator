@@ -55,7 +55,8 @@ namespace simulator
 
   bool PEArray::execute_one_step()
   {
-    std::cout << "fifo count: " << inputValuesFifos[0][0].size() << "first value: " << inputValuesFifos[0][0].front().value << std::endl;
+    std::cout << "input fifo count: " << inputValuesFifos[0][0].size() << "first value: " << inputValuesFifos[0][0].front().value << std::endl;
+    std::cout << "weight fifo count: " << weightValuesFifos[7][0].size() << "weight value: " << weightValuesFifos[0][0].front().value << std::endl;
     // if all of the value fifos become empty, we finish execution
     if(isLayerFinished(inputValuesFifos, weightValuesFifos)){
       // output for debug
@@ -135,13 +136,13 @@ namespace simulator
   )
   {
     bool isFinished = true;
-    for (int i = 0; i < inputFifos.size(); i++){
-      for (int j = 0; j < inputFifos[i].size(); j++){
+    for (int i = 0; i < num_PE_width; i++){
+      for (int j = 0; j < num_PE_parallel; j++){
         isFinished = isFinished && inputFifos[i][j].empty();
       }
     }
-    for (int i = 0; i < weightFifos.size(); i++){
-      for (int j = 0; j < weightFifos[i].size(); j++){
+    for (int i = 0; i < num_PE_height; i++){
+      for (int j = 0; j < num_PE_parallel; j++){
         isFinished = isFinished && weightFifos[i][j].empty();
       }
     }
@@ -384,7 +385,7 @@ namespace simulator
         weightControllerStatusForPEs[i].nextProcessIndex[bitIndex] = 0;
       }
     }
-    for (int memoryIndex = 0; memoryIndex < inputValuesFifos.size(); memoryIndex++){
+    for (int memoryIndex = 0; memoryIndex < weightValuesFifos.size(); memoryIndex++){
       for (int input_channel = 0; input_channel < num_PE_parallel; input_channel++){
         weightValuesFifos[memoryIndex][input_channel].pop_front();
       }
@@ -527,9 +528,9 @@ namespace simulator
         int writeOutputWidthPrefix = (w % 2 == 0) ? 0 : output_height - thisGroupHight;
         int writeOutputWidth = writeOutputWidthPrefix + outputPositionIndex % thisGroupWidth;
         // std::cout << writeOutputChannel << " " << writeOutputHeight << " " << writeOutputWidth << std::endl;
-        std::cout << outputOfPEs[h][w] << std::endl;
-        std::cout << outputMemory[writeOutputChannel][writeOutputHeight][writeOutputWidth] << std::endl;
-        // outputMemory[writeOutputChannel][writeOutputHeight][writeOutputWidth] = outputOfPEs[h][w];
+        // std::cout << outputOfPEs[h][w] << std::endl;
+        // std::cout << outputMemory[writeOutputChannel][writeOutputHeight][writeOutputWidth] << std::endl;
+        outputMemory[writeOutputChannel][writeOutputHeight][writeOutputWidth] = outputOfPEs[h][w];
       }
     }
   };

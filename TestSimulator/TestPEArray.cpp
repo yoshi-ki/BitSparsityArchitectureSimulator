@@ -132,7 +132,7 @@ namespace simulator::tests
     );
 
     int count = 0;
-    while (peArray.busy && count < 20)
+    while (peArray.busy)
     {
       peArray.execute_one_step();
       count++;
@@ -147,7 +147,7 @@ namespace simulator::tests
           // std::cout << outputValues[output_channel][output_height][output_width] << std::endl;
           // std::cout << "check real output" << std::endl;
           std::cout << peArray.outputMemory[output_channel][output_height][output_width] << std::endl;
-          // ASSERT_THAT(peArray.outputMemory[output_channel][output_height][output_width], Eq(outputValues[output_channel][output_height][output_width])) << ("output_channel, output_height, output_width = " + std::to_string(output_channel) + " " + std::to_string(output_height) + " " + std::to_string(output_width));
+          ASSERT_THAT(peArray.outputMemory[output_channel][output_height][output_width], Eq(outputValues[output_channel][output_height][output_width])) << ("output_channel, output_height, output_width = " + std::to_string(output_channel) + " " + std::to_string(output_height) + " " + std::to_string(output_width));
         }
       }
     }
