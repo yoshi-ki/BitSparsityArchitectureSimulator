@@ -253,12 +253,7 @@ namespace simulator
         int nextProcessIndex = isValidNow ? nowProcessIndex + 1 : nowProcessIndex;
         newInputControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex] = nextProcessIndex;
         newInputControllerStatusForPEs[fifoIndex].isWaiting[bitIndex] = !decodedInputs[fifoIndex].isValids[bitIndex][nextProcessIndex];
-        // std::cout << inputsForPEs[0].isValid[0] << std::endl;
-        // std::cout << inputsForPEs[0].isValid[1] << std::endl;
-        // std::cout << inputsForPEs[0].bitInputValue[0] << std::endl;
-        // std::cout << inputsForPEs[0].bitInputValue[1] << std::endl;
-
-        // std::cout << "iswaiting" << nextProcessIndex  << " " << !decodedInputs[fifoIndex].isValids[bitIndex][nextProcessIndex] << std::endl;
+        // std::cout << decodedInputs[fifoIndex].isValids[bitIndex][nextProcessIndex] << std::endl;
 
         // we do not change the status for finishedPsum here.
         newInputControllerStatusForPEs[fifoIndex].finishedPSum[bitIndex] = inputControllerStatusForPEs[fifoIndex].finishedPSum[bitIndex];
@@ -272,7 +267,9 @@ namespace simulator
         bool weightForThisBitNext = true;
         for (int inputFifoIndex = 0; inputFifoIndex < num_PE_width; inputFifoIndex++)
         {
+          // TODO: overwrote is the root cause of problem
           weightForThisBitNext = weightForThisBitNext && newInputControllerStatusForPEs[inputFifoIndex].isWaiting[bitIndex];
+          std::cout << newInputControllerStatusForPEs[inputFifoIndex].isWaiting[bitIndex] << std::endl;
         }
 
         if (weightForThisBitNext){
@@ -281,6 +278,7 @@ namespace simulator
           bool isValidNow = decodedWeights[fifoIndex].isValids[bitIndex][nowProcessIndex];
           int nextProcessIndex = isValidNow ? nowProcessIndex + 1 : nowProcessIndex;
           newWeightControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex] = nextProcessIndex;
+          // std::cout << "nextProcessIndex" << nextProcessIndex << std::endl;
 
           bool weightFifoWaiting = !decodedWeights[fifoIndex].isValids[bitIndex][nextProcessIndex];
           newWeightControllerStatusForPEs[fifoIndex].isWaiting[bitIndex] = weightFifoWaiting;
@@ -308,11 +306,29 @@ namespace simulator
       bool updateFifo = true;
       for (int weightFifoIndex = 0; weightFifoIndex < num_PE_height; weightFifoIndex++)
       {
+        // TODO: need to update here because the value will be overwrote
         updateFifo = updateFifo && newWeightControllerStatusForPEs[weightFifoIndex].isWaiting[bitIndex];
       }
 
       // update for activation and weight is done at the same time
       if(updateFifo){
+        // update input FIFO
+        for (int inputFifoIndex = 0; inputFifoIndex < num_PE_width; inputFifoIndex++){
+          if (!inputValuesFifos[inputFifoIndex][bitIndex].empty()){
+            // if the value is the last values of psum, we need to set wait status
+            if (inputValuesFifos[inputFifoIndex][bitIndex].front().isLast)
+            {
+              newInputControllerStatusForPEs[inputFifoIndex].finishedPSum[bitIndex] = true;
+              newInputControllerStatusForPEs[inputFifoIndex].isWaiting[bitIndex] = true;
+            }
+            else{
+              inputValuesFifos[inputFifoIndex][bitIndex].pop_front();
+              newInputControllerStatusForPEs[inputFifoIndex].isWaiting[bitIndex] = false;
+              newInputControllerStatusForPEs[inputFifoIndex].nextProcessIndex[bitIndex] = 0;
+              newInputControllerStatusForPEs[inputFifoIndex].finishedPSum[bitIndex] = false;
+            }
+          }
+        }
 
         // update weight FIFO
         for (int weightFifoIndex = 0; weightFifoIndex < num_PE_height; weightFifoIndex++)
@@ -328,23 +344,7 @@ namespace simulator
               weightValuesFifos[weightFifoIndex][bitIndex].pop_front();
               newWeightControllerStatusForPEs[weightFifoIndex].isWaiting[bitIndex] = false;
               newWeightControllerStatusForPEs[weightFifoIndex].nextProcessIndex[bitIndex] = 0;
-            }
-          }
-        }
-
-        // update input FIFO
-        for (int inputFifoIndex = 0; inputFifoIndex < num_PE_width; inputFifoIndex++){
-          if (!inputValuesFifos[inputFifoIndex][bitIndex].empty()){
-            // if the value is the last values of psum, we need to set wait status
-            if (inputValuesFifos[inputFifoIndex][bitIndex].front().isLast)
-            {
-              newInputControllerStatusForPEs[inputFifoIndex].finishedPSum[bitIndex] = true;
-              newInputControllerStatusForPEs[inputFifoIndex].isWaiting[bitIndex] = true;
-            }
-            else{
-              inputValuesFifos[inputFifoIndex][bitIndex].pop_front();
-              newInputControllerStatusForPEs[inputFifoIndex].isWaiting[bitIndex] = false;
-              newInputControllerStatusForPEs[inputFifoIndex].nextProcessIndex[bitIndex] = 0;
+              newWeightControllerStatusForPEs[weightFifoIndex].finishedPSum[bitIndex] = false;
             }
           }
         }

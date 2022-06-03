@@ -22,8 +22,9 @@ namespace simulator::tests
     for (int input_channel = 0; input_channel < num_input_channel; input_channel++){
       for (int input_height = 0; input_height < num_input_height; input_height++){
         for (int input_width = 0; input_width < num_input_width; input_width++){
-          inputValues[input_channel][input_height][input_width] = rand() % setSize;
-          inputValues[input_channel][input_height][input_width] = 2;
+          // inputValues[input_channel][input_height][input_width] = rand() % setSize;
+          inputValues[input_channel][input_height][input_width] = *std::next(availableValueSet.begin(), rand()%setSize);
+          // inputValues[input_channel][input_height][input_width] = 2;
         }
       }
     }
@@ -51,8 +52,9 @@ namespace simulator::tests
       for (int input_channel = 0; input_channel < num_input_channel; input_channel++){
         for (int kernel_height = 0; kernel_height < num_kernel_height; kernel_height++){
           for (int kernel_width = 0; kernel_width < num_kernel_width; kernel_width++){
-            weightValues[output_channel][input_channel][kernel_height][kernel_width] = rand() % setSize;
-            weightValues[output_channel][input_channel][kernel_height][kernel_width] = 2;
+            // weightValues[output_channel][input_channel][kernel_height][kernel_width] = rand() % setSize;
+            weightValues[output_channel][input_channel][kernel_height][kernel_width] = *std::next(availableValueSet.begin(), rand()%setSize);
+            // weightValues[output_channel][input_channel][kernel_height][kernel_width] = 2;
           }
         }
       }

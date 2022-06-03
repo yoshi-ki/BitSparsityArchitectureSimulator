@@ -94,16 +94,17 @@ namespace simulator::tests
     }
   }
 
-  TEST(PEArrayTests, ExecuteMockConv){
-    int num_input_channel=16;
-    int num_input_height=2;
-    int num_input_width=2;
-    int num_kernel_height=1;
-    int num_kernel_width=1;
-    int stride=1;
-    int num_output_channel=8;
-    std::set<int> availableValueSet = {1, 2, 3};
-
+  void ExecOneLayer(
+    int num_input_channel,
+    int num_input_height,
+    int num_input_width,
+    int num_kernel_height,
+    int num_kernel_width,
+    int stride,
+    int num_output_channel,
+    std::set<int>& availableValueSet
+  )
+  {
     int num_output_height = ((num_input_height - num_kernel_height) / stride) + 1;
     int num_output_width = ((num_input_width - num_kernel_width) / stride) + 1;
 
@@ -117,8 +118,6 @@ namespace simulator::tests
     makeRandomWeight(weightMemories, weightValues, num_kernel_height, num_kernel_width, num_input_channel, num_output_channel, availableValueSet);
     computeConv(inputValues, weightValues, outputValues, stride);
 
-    std::cout << inputMemories[0][0][0][0][0] << std::endl;
-
     simulator::PEArray peArray = simulator::PEArray(
       inputMemories,
       weightMemories,
@@ -131,27 +130,57 @@ namespace simulator::tests
       num_output_channel
     );
 
-    int count = 0;
     while (peArray.busy)
     {
       peArray.execute_one_step();
-      count++;
     }
-
-    std::cout << peArray.outputMemory[0][0][0] << std::endl;
-    std::cout << peArray.outputMemory[1][0][0] << std::endl;
 
     for (int output_channel = 0; output_channel < num_output_channel; output_channel++){
       for (int output_height = 0; output_height < num_output_height; output_height++){
         for (int output_width = 0; output_width < num_output_width; output_width++){
-          // std::cout << outputValues[output_channel][output_height][output_width] << std::endl;
+          std::cout << outputValues[output_channel][output_height][output_width] << std::endl;
           // std::cout << "check real output" << std::endl;
-          std::cout << peArray.outputMemory[output_channel][output_height][output_width] << std::endl;
           ASSERT_THAT(peArray.outputMemory[output_channel][output_height][output_width], Eq(outputValues[output_channel][output_height][output_width])) << ("output_channel, output_height, output_width = " + std::to_string(output_channel) + " " + std::to_string(output_height) + " " + std::to_string(output_width));
         }
       }
     }
+  }
 
-      ASSERT_THAT(0, Eq(0));
+  TEST(PEArrayTests, ExecuteMockConvWithConstantInput){
+    int num_input_channel=16;
+    int num_input_height=2;
+    int num_input_width=2;
+    int num_kernel_height=1;
+    int num_kernel_width=1;
+    int stride=1;
+    int num_output_channel=8;
+    std::set<int> availableValueSet = {2};
+    ExecOneLayer(num_input_channel, num_input_height, num_input_width, num_kernel_height, num_kernel_width, stride, num_output_channel, availableValueSet);
   };
+
+  TEST(PEArrayTests, ExecuteMockConvWithRandomInputIncludingMinus){
+    int num_input_channel=16;
+    int num_input_height=2;
+    int num_input_width=2;
+    int num_kernel_height=1;
+    int num_kernel_width=1;
+    int stride=1;
+    int num_output_channel=8;
+    std::set<int> availableValueSet = {-1,2,-2};
+    ExecOneLayer(num_input_channel, num_input_height, num_input_width, num_kernel_height, num_kernel_width, stride, num_output_channel, availableValueSet);
+  };
+
+  TEST(PEArrayTests, ExecuteMockConvWithConstantInput3){
+    int num_input_channel=16;
+    int num_input_height=2;
+    int num_input_width=2;
+    int num_kernel_height=1;
+    int num_kernel_width=1;
+    int stride=1;
+    int num_output_channel=8;
+    std::set<int> availableValueSet = {3};
+    ExecOneLayer(num_input_channel, num_input_height, num_input_width, num_kernel_height, num_kernel_width, stride, num_output_channel, availableValueSet);
+  };
+
+
 }
