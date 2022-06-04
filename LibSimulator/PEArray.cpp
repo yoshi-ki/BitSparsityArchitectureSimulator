@@ -243,6 +243,7 @@ namespace simulator
     auto newInputControllerStatusForPEs = std::vector<PEControllerStatus>(num_PE_width);
     auto newWeightControllerStatusForPEs = std::vector<PEControllerStatus>(num_PE_height);
 
+    auto tempInputIsWaiting = std::vector<std::vector<bool>>(num_PE_width, v<bool>(num_PE_parallel));
     // Stage 1: create new input controller status only by the last input controller status
     for (int fifoIndex = 0; fifoIndex < num_PE_width; fifoIndex++){
       for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
@@ -253,6 +254,7 @@ namespace simulator
         int nextProcessIndex = isValidNow ? nowProcessIndex + 1 : nowProcessIndex;
         newInputControllerStatusForPEs[fifoIndex].nextProcessIndex[bitIndex] = nextProcessIndex;
         newInputControllerStatusForPEs[fifoIndex].isWaiting[bitIndex] = !decodedInputs[fifoIndex].isValids[bitIndex][nextProcessIndex];
+        tempInputIsWaiting[fifoIndex][bitIndex] = !decodedInputs[fifoIndex].isValids[bitIndex][nextProcessIndex];
         // std::cout << decodedInputs[fifoIndex].isValids[bitIndex][nextProcessIndex] << std::endl;
 
         // we do not change the status for finishedPsum here.
@@ -260,6 +262,7 @@ namespace simulator
       }
     }
 
+    auto tempWeightIsWaiting = std::vector<std::vector<bool>>(num_PE_height, v<bool>(num_PE_parallel));
     // Stage 2: create new weight controller status
     for (int fifoIndex = 0; fifoIndex < num_PE_height; fifoIndex++){
       for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
@@ -268,8 +271,7 @@ namespace simulator
         for (int inputFifoIndex = 0; inputFifoIndex < num_PE_width; inputFifoIndex++)
         {
           // TODO: overwrote is the root cause of problem
-          weightForThisBitNext = weightForThisBitNext && newInputControllerStatusForPEs[inputFifoIndex].isWaiting[bitIndex];
-          std::cout << newInputControllerStatusForPEs[inputFifoIndex].isWaiting[bitIndex] << std::endl;
+          weightForThisBitNext = weightForThisBitNext && tempInputIsWaiting[inputFifoIndex][bitIndex];
         }
 
         if (weightForThisBitNext){
@@ -282,11 +284,13 @@ namespace simulator
 
           bool weightFifoWaiting = !decodedWeights[fifoIndex].isValids[bitIndex][nextProcessIndex];
           newWeightControllerStatusForPEs[fifoIndex].isWaiting[bitIndex] = weightFifoWaiting;
+          tempWeightIsWaiting[fifoIndex][bitIndex] = weightFifoWaiting;
 
           // we need to update the status for input controller if new weight bit is produced
           if (!weightFifoWaiting){
             for (int inputFifoIndex = 0; inputFifoIndex < num_PE_width; inputFifoIndex++)
             {
+              // have to overwrite the status for input
               newInputControllerStatusForPEs[inputFifoIndex].isWaiting[bitIndex] = false;
               newInputControllerStatusForPEs[inputFifoIndex].nextProcessIndex[bitIndex] = 0;
             }
@@ -307,7 +311,7 @@ namespace simulator
       for (int weightFifoIndex = 0; weightFifoIndex < num_PE_height; weightFifoIndex++)
       {
         // TODO: need to update here because the value will be overwrote
-        updateFifo = updateFifo && newWeightControllerStatusForPEs[weightFifoIndex].isWaiting[bitIndex];
+        updateFifo = updateFifo && tempWeightIsWaiting[weightFifoIndex][bitIndex];
       }
 
       // update for activation and weight is done at the same time
