@@ -25,7 +25,7 @@ namespace simulator
 
   struct DecodedRegister{
     // it is for 16 inputs and values just decoded
-    std::vector<std::vector<unsigned int>> bitInputValues;
+    std::vector<std::vector<unsigned int>> bitInputValues; // [inputChannel][bitIndex]
     std::vector<std::vector<bool>> isNegatives;
     std::vector<std::vector<bool>> isValids;
   };

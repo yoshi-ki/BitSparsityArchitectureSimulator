@@ -6,7 +6,10 @@ namespace simulator::tests
     int num_input_channel,
     int num_input_height,
     int num_input_width,
-    std::set<int>& availableValueSet
+    std::set<int>& availableValueSet,
+    int stride,
+    int num_kernel_height,
+    int num_kernel_width
   );
 
   void makeRandomWeight(
