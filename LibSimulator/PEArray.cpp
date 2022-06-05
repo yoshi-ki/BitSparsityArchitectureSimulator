@@ -536,7 +536,7 @@ namespace simulator
         // (for (w, h) in this particular group, group is divided into num_PE_width groups)
         int thisGroupHeight = output_height / 2 + ((w / 2 == 0) ? output_height % 2 : 0);
         int thisGroupWidth = output_width / 2 + ((w % 2 == 0) ? output_width % 2 : 0);
-        // std::cout << outputStatus << " " << thisGroupHeight << " " << thisGroupWidth << std::endl;
+        std::cout << outputStatus << " " << thisGroupHeight << " " << thisGroupWidth << std::endl;
 
         int outputChannelGroup = outputStatus / (thisGroupHeight * thisGroupWidth); // TODO: we might have strange thing if we have different timing for the end of output channel
         int outputPositionIndex = outputStatus % (thisGroupHeight * thisGroupWidth);
@@ -544,7 +544,7 @@ namespace simulator
         int writeOutputChannel = h + num_PE_height * outputChannelGroup;
 
         int writeOutputHeightPrefix = (w / 2 == 0) ? 0 : output_height - thisGroupHeight;
-        int writeOutputHeight = writeOutputHeightPrefix + outputPositionIndex / thisGroupHeight;
+        int writeOutputHeight = writeOutputHeightPrefix + outputPositionIndex / thisGroupWidth;
 
         int writeOutputWidthPrefix = (w % 2 == 0) ? 0 : output_width - thisGroupWidth;
         int writeOutputWidth = writeOutputWidthPrefix + outputPositionIndex % thisGroupWidth;

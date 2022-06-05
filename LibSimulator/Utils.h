@@ -5,7 +5,10 @@ namespace simulator
 {
   void convertInputToInputMemoryFormat(
     std::vector<std::vector<std::vector<int>>> &inputValues,
-    std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>> &inputMemories
+    std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>> &inputMemories,
+    int stride,
+    int num_kernel_height,
+    int num_kernel_width
   );
 
   void convertWeightToWeightMemoryFormat(
