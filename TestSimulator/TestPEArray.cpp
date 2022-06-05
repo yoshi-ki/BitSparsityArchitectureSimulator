@@ -171,17 +171,17 @@ namespace simulator::tests
     ExecOneLayer(num_input_channel, num_input_height, num_input_width, num_kernel_height, num_kernel_width, stride, num_output_channel, availableValueSet);
   };
 
-  // TEST(PEArrayTests, ExecuteMockConvDifferentSize){
-  //   int num_input_channel=10;
-  //   int num_input_height=4;
-  //   int num_input_width=4;
-  //   int num_kernel_height=2;
-  //   int num_kernel_width=2;
-  //   int stride=1;
-  //   int num_output_channel=16;
-  //   std::set<int> availableValueSet = {2};
-  //   ExecOneLayer(num_input_channel, num_input_height, num_input_width, num_kernel_height, num_kernel_width, stride, num_output_channel, availableValueSet);
-  // };
+  TEST(PEArrayTests, ExecuteMockConvDifferentSize){
+    int num_input_channel=16;
+    int num_input_height=4;
+    int num_input_width=4;
+    int num_kernel_height=1;
+    int num_kernel_width=1;
+    int stride=1;
+    int num_output_channel=16;
+    std::set<int> availableValueSet = {2};
+    ExecOneLayer(num_input_channel, num_input_height, num_input_width, num_kernel_height, num_kernel_width, stride, num_output_channel, availableValueSet);
+  };
 
   TEST(PEArrayTests, ExecuteMockConvOutputChannel10){
     int num_input_channel=16;

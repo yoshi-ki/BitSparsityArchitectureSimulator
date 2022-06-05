@@ -453,19 +453,18 @@ namespace simulator
                 }
               }
             }
-          }
-        }
+            // insert end of the psum
+            for (int input_channel = 0; input_channel < num_PE_parallel; input_channel++){
+              if(inputValuesFifos[memoryIndex][input_channel].empty()){
+                continue;
+              }
 
-        // insert end of the psum
-        for (int input_channel = 0; input_channel < num_PE_parallel; input_channel++){
-          if(inputValuesFifos[memoryIndex][input_channel].empty()){
-            continue;
+              auto lastVal = inputValuesFifos[memoryIndex][input_channel].back();
+              lastVal.isLast= true;
+              inputValuesFifos[memoryIndex][input_channel].pop_back();
+              inputValuesFifos[memoryIndex][input_channel].push_back(lastVal);
+            }
           }
-
-          auto lastVal = inputValuesFifos[memoryIndex][input_channel].back();
-          lastVal.isLast= true;
-          inputValuesFifos[memoryIndex][input_channel].pop_back();
-          inputValuesFifos[memoryIndex][input_channel].push_back(lastVal);
         }
       }
     }
@@ -507,18 +506,17 @@ namespace simulator
               }
             }
           }
+          // insert end of the psum
+          for (int input_channel = 0; input_channel < num_PE_parallel; input_channel++){
+            if(weightValuesFifos[memoryIndex][input_channel].empty()){
+              continue;
+            }
+            auto lastVal = weightValuesFifos[memoryIndex][input_channel].back();
+            lastVal.isLast = true;
+            weightValuesFifos[memoryIndex][input_channel].pop_back();
+            weightValuesFifos[memoryIndex][input_channel].push_back(lastVal);
+          }
         }
-      }
-
-      // insert end of the psum
-      for (int input_channel = 0; input_channel < num_PE_parallel; input_channel++){
-        if(weightValuesFifos[memoryIndex][input_channel].empty()){
-          continue;
-        }
-        auto lastVal = weightValuesFifos[memoryIndex][input_channel].back();
-        lastVal.isLast = true;
-        weightValuesFifos[memoryIndex][input_channel].pop_back();
-        weightValuesFifos[memoryIndex][input_channel].push_back(lastVal);
       }
     }
   };
@@ -535,9 +533,10 @@ namespace simulator
     for (int h = 0; h < num_PE_height; h++)
     {
       for (int w = 0; w < num_PE_width; w++){
-        // (for (w, h))
-        int thisGroupWidth = output_width / 2 + ((w % 2 == 0) ? output_width % 2 : 0);
+        // (for (w, h) in this particular group, group is divided into num_PE_width groups)
         int thisGroupHight = output_height / 2 + ((w / 2 == 0) ? output_height % 2 : 0);
+        int thisGroupWidth = output_width / 2 + ((w % 2 == 0) ? output_width % 2 : 0);
+        std::cout << outputStatus << " " << thisGroupHight << " " << thisGroupWidth << std::endl;
 
         int outputChannelGroup = outputStatus / (thisGroupHight * thisGroupWidth); // TODO: we might have strange thing if we have different timing for the end of output channel
         int outputPositionIndex = outputStatus % (thisGroupHight * thisGroupWidth);
@@ -549,11 +548,11 @@ namespace simulator
 
         int writeOutputWidthPrefix = (w % 2 == 0) ? 0 : output_height - thisGroupHight;
         int writeOutputWidth = writeOutputWidthPrefix + outputPositionIndex % thisGroupWidth;
-        // std::cout << writeOutputChannel << " " << writeOutputHeight << " " << writeOutputWidth << std::endl;
-        // std::cout << outputOfPEs[h][w] << std::endl;
-        // std::cout << outputMemory[writeOutputChannel][writeOutputHeight][writeOutputWidth] << std::endl;
+        std::cout << "outputMemoryPlace: " << writeOutputChannel << " " << writeOutputHeight << " " << writeOutputWidth << std::endl;
         if (writeOutputChannel < num_output_channel && writeOutputHeight < output_height && writeOutputWidth < output_width){
           outputMemory[writeOutputChannel][writeOutputHeight][writeOutputWidth] = outputOfPEs[h][w];
+          std::cout << outputOfPEs[h][w] << std::endl;
+          std::cout << outputMemory[writeOutputChannel][writeOutputHeight][writeOutputWidth] << std::endl;
         }
       }
     }
