@@ -435,8 +435,8 @@ namespace simulator
         int partialInputHeight = (memoryIndex == 0 || memoryIndex == 3) ? input_height / 2 + input_height % 2 : input_height / 2;
         int partialInputWidth = (memoryIndex == 0 || memoryIndex == 2) ? input_width / 2 + input_width % 2 : input_width / 2;
         // start position of window
-        for (int windowStartHeight = 0; windowStartHeight < partialInputHeight - kernel_height + 1; windowStartHeight = windowStartHeight + stride){
-          for (int windowStartWidth = 0; windowStartWidth < partialInputWidth - kernel_width + 1; windowStartWidth = windowStartWidth + stride){
+        for (int windowStartHeight = 0; windowStartHeight < partialInputHeight; windowStartHeight = windowStartHeight + stride){
+          for (int windowStartWidth = 0; windowStartWidth < partialInputWidth; windowStartWidth = windowStartWidth + stride){
             for (int kh = 0; kh < kernel_height; kh++){
               for (int kw = 0; kw < kernel_width; kw++){
                 for (int channelGroup = 0; channelGroup < num_input_channel_group; channelGroup++){
@@ -489,8 +489,8 @@ namespace simulator
       int partialInputWidth = (memoryIndex == 0 || memoryIndex == 2) ? input_width / 2 + input_width % 2 : input_width / 2;
 
       // this is not the start position here, it is just iteration
-      for (int windowStartHeight = 0; windowStartHeight < partialInputHeight - kernel_height + 1; windowStartHeight = windowStartHeight + stride){
-        for (int windowStartWidth = 0; windowStartWidth < partialInputWidth - kernel_width + 1; windowStartWidth = windowStartWidth + stride){
+      for (int windowStartHeight = 0; windowStartHeight < partialInputHeight; windowStartHeight = windowStartHeight + stride){
+        for (int windowStartWidth = 0; windowStartWidth < partialInputWidth; windowStartWidth = windowStartWidth + stride){
 
           for (int kh = 0; kh < kernel_height; kh++){
             for (int kw = 0; kw < kernel_width; kw++){
@@ -534,19 +534,19 @@ namespace simulator
     {
       for (int w = 0; w < num_PE_width; w++){
         // (for (w, h) in this particular group, group is divided into num_PE_width groups)
-        int thisGroupHight = output_height / 2 + ((w / 2 == 0) ? output_height % 2 : 0);
+        int thisGroupHeight = output_height / 2 + ((w / 2 == 0) ? output_height % 2 : 0);
         int thisGroupWidth = output_width / 2 + ((w % 2 == 0) ? output_width % 2 : 0);
-        std::cout << outputStatus << " " << thisGroupHight << " " << thisGroupWidth << std::endl;
+        // std::cout << outputStatus << " " << thisGroupHeight << " " << thisGroupWidth << std::endl;
 
-        int outputChannelGroup = outputStatus / (thisGroupHight * thisGroupWidth); // TODO: we might have strange thing if we have different timing for the end of output channel
-        int outputPositionIndex = outputStatus % (thisGroupHight * thisGroupWidth);
+        int outputChannelGroup = outputStatus / (thisGroupHeight * thisGroupWidth); // TODO: we might have strange thing if we have different timing for the end of output channel
+        int outputPositionIndex = outputStatus % (thisGroupHeight * thisGroupWidth);
 
         int writeOutputChannel = h + num_PE_height * outputChannelGroup;
 
-        int writeOutputHeightPrefix = (w / 2 == 0) ? 0 : output_width - thisGroupWidth;
-        int writeOutputHeight = writeOutputHeightPrefix + outputPositionIndex / thisGroupWidth;
+        int writeOutputHeightPrefix = (w / 2 == 0) ? 0 : output_height - thisGroupHeight;
+        int writeOutputHeight = writeOutputHeightPrefix + outputPositionIndex / thisGroupHeight;
 
-        int writeOutputWidthPrefix = (w % 2 == 0) ? 0 : output_height - thisGroupHight;
+        int writeOutputWidthPrefix = (w % 2 == 0) ? 0 : output_width - thisGroupWidth;
         int writeOutputWidth = writeOutputWidthPrefix + outputPositionIndex % thisGroupWidth;
         std::cout << "outputMemoryPlace: " << writeOutputChannel << " " << writeOutputHeight << " " << writeOutputWidth << std::endl;
         if (writeOutputChannel < num_output_channel && writeOutputHeight < output_height && writeOutputWidth < output_width){
