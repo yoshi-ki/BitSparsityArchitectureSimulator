@@ -36,15 +36,18 @@ namespace simulator
 
     int num_output_height = ((num_input_height - num_kernel_height) / stride) + 1;
     int num_output_width = ((num_input_width - num_kernel_width) / stride) + 1;
+    std::cout << "output height, width: " << num_output_height << " " << num_output_width << std::endl;
     int firstGroupOutputHeight = num_output_height / 2 + num_output_height % 2;
     int firstGroupOutputWidth = num_output_width / 2 + num_output_width % 2;
+    std::cout << "firstGroupOutput Height, Width: " << firstGroupOutputHeight << " " << firstGroupOutputWidth << std::endl;
+
     for (int memoryIndex = 0; memoryIndex < num_PE_width; memoryIndex++){
       bool isheightFirstGroup = (memoryIndex / 2 == 0);
       bool iswidthFirstGroup = (memoryIndex % 2 == 0);
 
-      int input_height_start = isheightFirstGroup ? 0 : firstGroupOutputHeight * stride - num_kernel_height + 1;
+      int input_height_start = isheightFirstGroup ? 0 : firstGroupOutputHeight * stride;
       int input_height_end = isheightFirstGroup ? firstGroupOutputHeight * stride + num_kernel_height - 1: num_input_height;
-      int input_width_start = iswidthFirstGroup ? 0 : firstGroupOutputWidth * stride - num_kernel_width + 1;
+      int input_width_start = iswidthFirstGroup ? 0 : firstGroupOutputWidth * stride;
       int input_width_end = iswidthFirstGroup ? firstGroupOutputWidth * stride + num_kernel_width - 1 : num_input_width;
       std::cout << input_height_start << input_height_end << std::endl;
       std::cout << input_width_start << input_width_end << std::endl;

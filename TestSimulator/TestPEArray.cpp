@@ -12,30 +12,31 @@ using namespace testing;
 
 namespace simulator::tests
 {
-	TEST(PEArrayTests, InitializePEArray) {
-    std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>> inputMemories;
-    std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>> weightMemories;
-    int num_input_channel;
-    int num_input_height;
-    int num_input_width;
-    int num_kernel_height;
-    int num_kernel_width;
-    int stride;
-    int num_output_channel;
+  // TODO: check why it consumes a lot of time
+	// TEST(PEArrayTests, InitializePEArray) {
+  //   std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>> inputMemories;
+  //   std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>> weightMemories;
+  //   int num_input_channel;
+  //   int num_input_height;
+  //   int num_input_width;
+  //   int num_kernel_height;
+  //   int num_kernel_width;
+  //   int stride;
+  //   int num_output_channel;
 
-    simulator::PEArray peArray = simulator::PEArray(
-      inputMemories,
-      weightMemories,
-      num_input_channel,
-      num_input_height,
-      num_input_width,
-      num_kernel_height,
-      num_kernel_width,
-      stride,
-      num_output_channel
-    );
-    ASSERT_THAT(0, Eq(0));
-	}
+  //   simulator::PEArray peArray = simulator::PEArray(
+  //     inputMemories,
+  //     weightMemories,
+  //     num_input_channel,
+  //     num_input_height,
+  //     num_input_width,
+  //     num_kernel_height,
+  //     num_kernel_width,
+  //     stride,
+  //     num_output_channel
+  //   );
+  //   ASSERT_THAT(0, Eq(0));
+	// }
 
   // TEST(PEArrayTests, convertInputMemoriesToFifos){
   //   convertInputMemoriesToFifos(inputMemories, inputValuesFifos, num_input_channel, input_height, input_width, kernel_height, kernel_width, stride, num_output_channel);
@@ -203,6 +204,18 @@ namespace simulator::tests
     int num_kernel_width=1;
     int stride=1;
     int num_output_channel=2;
+    std::set<int> availableValueSet = {2};
+    ExecOneLayer(num_input_channel, num_input_height, num_input_width, num_kernel_height, num_kernel_width, stride, num_output_channel, availableValueSet);
+  };
+
+  TEST(PEArrayTests, ExecuteMockConvVarious){
+    int num_input_channel=16;
+    int num_input_height=1;
+    int num_input_width=1;
+    int num_kernel_height=1;
+    int num_kernel_width=1;
+    int stride=1;
+    int num_output_channel=8;
     std::set<int> availableValueSet = {2};
     ExecOneLayer(num_input_channel, num_input_height, num_input_width, num_kernel_height, num_kernel_width, stride, num_output_channel, availableValueSet);
   };

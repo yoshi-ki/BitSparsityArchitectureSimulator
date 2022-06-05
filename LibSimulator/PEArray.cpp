@@ -55,8 +55,8 @@ namespace simulator
 
   bool PEArray::execute_one_step()
   {
-    std::cout << "input fifo count: " << inputValuesFifos[0][0].size() << "first value: " << inputValuesFifos[0][0].front().value << std::endl;
-    std::cout << "weight fifo count: " << weightValuesFifos[0][0].size() << "weight value: " << weightValuesFifos[0][0].front().value << std::endl;
+    std::cout << "input fifo count: " << inputValuesFifos[0][0].size() << "first value: " << (inputValuesFifos[0][0].size() != 0 ? inputValuesFifos[0][0].front().value : 0)<< std::endl;
+    std::cout << "weight fifo count: " << weightValuesFifos[0][0].size() << "weight value: " << (weightValuesFifos[0][0].size() != 0 ? weightValuesFifos[0][0].front().value : 0)<< std::endl;
     // if all of the value fifos become empty, we finish execution
     if(isLayerFinished(inputValuesFifos, weightValuesFifos)){
       // output for debug
@@ -432,8 +432,17 @@ namespace simulator
     for (int iter = 0; iter < iterationForOutputChannelGroup; iter++){
       for (int memoryIndex = 0; memoryIndex < inputMemories.size(); memoryIndex++){
         // input is divided into four areas, so we need to compute the size of the each areas
-        int partialInputHeight = (memoryIndex == 0 || memoryIndex == 3) ? input_height / 2 + input_height % 2 : input_height / 2;
-        int partialInputWidth = (memoryIndex == 0 || memoryIndex == 2) ? input_width / 2 + input_width % 2 : input_width / 2;
+        // int partialInputHeight = (memoryIndex == 0 || memoryIndex == 1) ? input_height / 2 + input_height % 2 : input_height / 2;
+        // int partialInputWidth = (memoryIndex == 0 || memoryIndex == 2) ? input_width / 2 + input_width % 2 : input_width / 2;
+
+        int num_output_height = ((input_height - kernel_height) / stride) + 1;
+        int num_output_width = ((input_width - kernel_width) / stride) + 1;
+        int firstGroupOutputHeight = num_output_height / 2 + num_output_height % 2;
+        int firstGroupOutputWidth = num_output_width / 2 + num_output_width % 2;
+        int partialInputHeight = (memoryIndex == 0 || memoryIndex == 1) ? firstGroupOutputHeight : num_output_height - firstGroupOutputHeight;
+        int partialInputWidth = (memoryIndex == 0 || memoryIndex == 2) ? firstGroupOutputWidth : num_output_width - firstGroupOutputWidth;
+
+        // std::cout << partialInputHeight << partialInputWidth << std::endl;
         // start position of window
         for (int windowStartHeight = 0; windowStartHeight < partialInputHeight; windowStartHeight = windowStartHeight + stride){
           for (int windowStartWidth = 0; windowStartWidth < partialInputWidth; windowStartWidth = windowStartWidth + stride){
@@ -485,8 +494,15 @@ namespace simulator
     int num_input_channel_group = num_input_channel / num_PE_parallel + fmin(num_input_channel % num_PE_parallel, 1);
     for (int output_channel = 0; output_channel < num_output_channel; output_channel++){
       int memoryIndex = output_channel % num_PE_height;
-      int partialInputHeight = (memoryIndex == 0 || memoryIndex == 3) ? input_height / 2 + input_height % 2 : input_height / 2;
-      int partialInputWidth = (memoryIndex == 0 || memoryIndex == 2) ? input_width / 2 + input_width % 2 : input_width / 2;
+      // int partialInputHeight = (memoryIndex == 0 || memoryIndex == 1) ? input_height / 2 + input_height % 2 : input_height / 2;
+      // int partialInputWidth = (memoryIndex == 0 || memoryIndex == 2) ? input_width / 2 + input_width % 2 : input_width / 2;
+
+      int num_output_height = ((input_height - kernel_height) / stride) + 1;
+      int num_output_width = ((input_width - kernel_width) / stride) + 1;
+      int firstGroupOutputHeight = num_output_height / 2 + num_output_height % 2;
+      int firstGroupOutputWidth = num_output_width / 2 + num_output_width % 2;
+      int partialInputHeight = firstGroupOutputHeight; // use bigger height
+      int partialInputWidth = firstGroupOutputWidth; // use bigger width
 
       // this is not the start position here, it is just iteration
       for (int windowStartHeight = 0; windowStartHeight < partialInputHeight; windowStartHeight = windowStartHeight + stride){
@@ -536,7 +552,10 @@ namespace simulator
         // (for (w, h) in this particular group, group is divided into num_PE_width groups)
         int thisGroupHeight = output_height / 2 + ((w / 2 == 0) ? output_height % 2 : 0);
         int thisGroupWidth = output_width / 2 + ((w % 2 == 0) ? output_width % 2 : 0);
-        std::cout << outputStatus << " " << thisGroupHeight << " " << thisGroupWidth << std::endl;
+        // std::cout << outputStatus << " " << thisGroupHeight << " " << thisGroupWidth << std::endl;
+        if (thisGroupHeight == 0 || thisGroupWidth == 0){
+          continue;
+        }
 
         int outputChannelGroup = outputStatus / (thisGroupHeight * thisGroupWidth); // TODO: we might have strange thing if we have different timing for the end of output channel
         int outputPositionIndex = outputStatus % (thisGroupHeight * thisGroupWidth);
