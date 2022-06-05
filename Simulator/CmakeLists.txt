@@ -1,3 +1,5 @@
 add_executable(Simulator main.cpp)
+add_executable(PerformanceTest performanceTest.cpp)
 
 target_link_libraries(Simulator LibSimulator)
+target_link_libraries(PerformanceTest LibSimulator)
