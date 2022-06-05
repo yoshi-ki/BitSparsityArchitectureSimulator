@@ -5,6 +5,9 @@
 #include "PEArray.h"
 #include "Utils.h"
 
+#include "matplotlibcpp.h"
+namespace plt = matplotlibcpp;
+
 namespace simulator::performanceTest{
 
   int makeNBitIntByBitSparsity(
@@ -133,7 +136,11 @@ namespace simulator::performanceTest{
 
 int main(int argc, char** argv)
 {
-  std::cout << "hello world => " << simulator::performanceTest::ExecOneLayerOutputCount(16,4,4,2,2,1,8,30,30) << std::endl;
+  for (int sparsity = 0; sparsity <= 100; sparsity= sparsity + 10){
+    std::cout << "hello world => " << simulator::performanceTest::ExecOneLayerOutputCount(16, 4, 4, 2, 2, 1, 8, 30, 30) << std::endl;
+  }
+  plt::plot({1, 2, 4, 8, 16});
+  plt::show();
 
   return EXIT_SUCCESS;
 }
