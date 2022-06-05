@@ -146,6 +146,58 @@ namespace simulator::tests
     }
   }
 
+  #pragma region PEArrayTests with various shape
+  TEST(PEArrayTests, ExecuteMockConvManyInputOutput32){
+    int num_input_channel=32;
+    int num_input_height=2;
+    int num_input_width=2;
+    int num_kernel_height=1;
+    int num_kernel_width=1;
+    int stride=1;
+    int num_output_channel=32;
+    std::set<int> availableValueSet = {2};
+    ExecOneLayer(num_input_channel, num_input_height, num_input_width, num_kernel_height, num_kernel_width, stride, num_output_channel, availableValueSet);
+  };
+
+  TEST(PEArrayTests, ExecuteMockConvInputChannel10){
+    int num_input_channel=10;
+    int num_input_height=2;
+    int num_input_width=2;
+    int num_kernel_height=1;
+    int num_kernel_width=1;
+    int stride=1;
+    int num_output_channel=16;
+    std::set<int> availableValueSet = {2};
+    ExecOneLayer(num_input_channel, num_input_height, num_input_width, num_kernel_height, num_kernel_width, stride, num_output_channel, availableValueSet);
+  };
+
+  // TEST(PEArrayTests, ExecuteMockConvDifferentSize){
+  //   int num_input_channel=10;
+  //   int num_input_height=4;
+  //   int num_input_width=4;
+  //   int num_kernel_height=2;
+  //   int num_kernel_width=2;
+  //   int stride=1;
+  //   int num_output_channel=16;
+  //   std::set<int> availableValueSet = {2};
+  //   ExecOneLayer(num_input_channel, num_input_height, num_input_width, num_kernel_height, num_kernel_width, stride, num_output_channel, availableValueSet);
+  // };
+
+  TEST(PEArrayTests, ExecuteMockConvOutputChannel10){
+    int num_input_channel=16;
+    int num_input_height=2;
+    int num_input_width=2;
+    int num_kernel_height=1;
+    int num_kernel_width=1;
+    int stride=1;
+    int num_output_channel=2;
+    std::set<int> availableValueSet = {2};
+    ExecOneLayer(num_input_channel, num_input_height, num_input_width, num_kernel_height, num_kernel_width, stride, num_output_channel, availableValueSet);
+  };
+  #pragma endregion
+
+  #pragma region PEArrayTests with pre-defined shape
+
   TEST(PEArrayTests, ExecuteMockConvWithConstantInput){
     int num_input_channel=16;
     int num_input_height=2;
@@ -190,8 +242,10 @@ namespace simulator::tests
     int num_kernel_width=1;
     int stride=1;
     int num_output_channel=8;
-    std::set<int> availableValueSet = {1,2,3,4,5};
+    std::set<int> availableValueSet = {0,1,2,3,4,5};
     ExecOneLayer(num_input_channel, num_input_height, num_input_width, num_kernel_height, num_kernel_width, stride, num_output_channel, availableValueSet);
   };
+
+  #pragma endregion
 
 }
