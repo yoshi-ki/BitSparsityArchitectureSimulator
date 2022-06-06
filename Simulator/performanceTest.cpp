@@ -86,8 +86,8 @@ namespace simulator::performanceTest{
     int num_kernel_width,
     int stride,
     int num_output_channel,
-    float inputBitSparsity, // represents as percent of zeros
-    float weightBitSparsity // represents as percent of zeros
+    int inputBitSparsity, // represents as percent of zeros
+    int weightBitSparsity // represents as percent of zeros
   )
   {
     int num_output_height = ((num_input_height - num_kernel_height) / stride) + 1;
@@ -122,25 +122,59 @@ namespace simulator::performanceTest{
       cycles++;
     }
 
-    // for (int output_channel = 0; output_channel < num_output_channel; output_channel++){
-    //   for (int output_height = 0; output_height < num_output_height; output_height++){
-    //     for (int output_width = 0; output_width < num_output_width; output_width++){
-    //       std::cout << outputValues[output_channel][output_height][output_width] << std::endl;
-    //     }
-    //   }
-    // }
-
     return cycles;
   }
 }
 
+
+
 int main(int argc, char** argv)
 {
-  for (int sparsity = 0; sparsity <= 100; sparsity= sparsity + 10){
-    std::cout << "hello world => " << simulator::performanceTest::ExecOneLayerOutputCount(16, 4, 4, 2, 2, 1, 8, 30, 30) << std::endl;
+  // test
+  int num_layer = 2;
+  auto num_input_channels = std::vector<int> {  3,   2};
+  auto num_input_heights  = std::vector<int> {  4,   2};
+  auto num_input_widths   = std::vector<int> {  4,   2};
+  auto num_kernel_heights = std::vector<int> {  3,   1};
+  auto num_kernel_widths  = std::vector<int> {  3,   1};
+  auto strides            = std::vector<int> {  1,   1};
+  auto num_output_channels = std::vector<int> {64, 128};
+
+  // VGG11 * ImageNet
+  // int num_layer = 11;
+  // auto num_input_channels = std::vector<int> {  3,  64, 128, 256, 256, 512, 512, 512, 25088, 4096, 4096};
+  // auto num_input_heights  = std::vector<int> { 32,  16,   8,   8,   4,   4,   2,   2,     1,    1,    1};
+  // auto num_input_widths   = std::vector<int> { 32, 112,   8,   8,   4,   4,   2,   2,     1,    1,    1};
+  // auto num_kernel_heights = std::vector<int> {  3,   3,   3,   3,   3,   3,   3,   3,     1,    1,    1};
+  // auto num_kernel_widths  = std::vector<int> {  3,   3,   3,   3,   3,   3,   3,   3,     1,    1,    1};
+  // auto strides            = std::vector<int> {  1,   1,   1,   1,   1,   1,   1,   1,     1,    1,    1};
+  // auto num_output_channels = std::vector<int> {64, 128, 256, 256, 512, 512, 512, 512,  4096, 4096, 1000};
+
+  auto sumCycles = std::vector<int>(11);
+  int itr = 0;
+  for (int sparsity = 0; sparsity <= 100; sparsity = sparsity + 10)
+  {
+    int sumCycle = 0;
+    for (int layer = 0; layer < num_layer; layer++){
+      int cycle =
+          simulator::performanceTest::ExecOneLayerOutputCount(
+              num_input_channels[layer],
+              num_input_heights[layer],
+              num_input_widths[layer],
+              num_kernel_heights[layer],
+              num_kernel_widths[layer],
+              strides[layer],
+              num_output_channels[layer],
+              sparsity,
+              sparsity);
+      std::cout << "sparsity: " << sparsity << " layer: " << layer << " cycle: " << cycle << std::endl;
+      sumCycle = sumCycle + cycle;
+    }
+    sumCycles[itr] = sumCycle;
   }
-  plt::plot({1, 2, 4, 8, 16});
-  plt::show();
+  plt::plot(sumCycles);
+  plt::save("vgg11.pdf");
+  // plt::show();
 
   return EXIT_SUCCESS;
 }
