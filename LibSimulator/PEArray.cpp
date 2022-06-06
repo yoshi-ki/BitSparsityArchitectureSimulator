@@ -55,8 +55,8 @@ namespace simulator
 
   bool PEArray::execute_one_step()
   {
-    std::cout << "input fifo count: " << inputValuesFifos[0][0].size() << "first value: " << (inputValuesFifos[0][0].size() != 0 ? inputValuesFifos[0][0].front().value : 0)<< std::endl;
-    std::cout << "weight fifo count: " << weightValuesFifos[0][0].size() << "weight value: " << (weightValuesFifos[0][0].size() != 0 ? weightValuesFifos[0][0].front().value : 0)<< std::endl;
+    // std::cout << "input fifo count: " << inputValuesFifos[0][0].size() << "first value: " << (inputValuesFifos[0][0].size() != 0 ? inputValuesFifos[0][0].front().value : 0)<< std::endl;
+    // std::cout << "weight fifo count: " << weightValuesFifos[0][0].size() << "weight value: " << (weightValuesFifos[0][0].size() != 0 ? weightValuesFifos[0][0].front().value : 0)<< std::endl;
     // if all of the value fifos become empty, we finish execution
     if(isLayerFinished(inputValuesFifos, weightValuesFifos)){
       // output for debug
@@ -567,11 +567,11 @@ namespace simulator
 
         int writeOutputWidthPrefix = (w % 2 == 0) ? 0 : output_width - thisGroupWidth;
         int writeOutputWidth = writeOutputWidthPrefix + outputPositionIndex % thisGroupWidth;
-        std::cout << "outputMemoryPlace: " << writeOutputChannel << " " << writeOutputHeight << " " << writeOutputWidth << std::endl;
+        // std::cout << "outputMemoryPlace: " << writeOutputChannel << " " << writeOutputHeight << " " << writeOutputWidth << std::endl;
         if (writeOutputChannel < num_output_channel && writeOutputHeight < output_height && writeOutputWidth < output_width){
           outputMemory[writeOutputChannel][writeOutputHeight][writeOutputWidth] = outputOfPEs[h][w];
-          std::cout << outputOfPEs[h][w] << std::endl;
-          std::cout << outputMemory[writeOutputChannel][writeOutputHeight][writeOutputWidth] << std::endl;
+          // std::cout << outputOfPEs[h][w] << std::endl;
+          // std::cout << outputMemory[writeOutputChannel][writeOutputHeight][writeOutputWidth] << std::endl;
         }
       }
     }

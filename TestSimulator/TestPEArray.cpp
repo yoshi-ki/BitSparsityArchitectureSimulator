@@ -209,13 +209,13 @@ namespace simulator::tests
   };
 
   TEST(PEArrayTests, ExecuteMockConvVarious){
-    int num_input_channel=16;
+    int num_input_channel=4096;
     int num_input_height=1;
     int num_input_width=1;
     int num_kernel_height=1;
     int num_kernel_width=1;
     int stride=1;
-    int num_output_channel=8;
+    int num_output_channel=4096;
     std::set<int> availableValueSet = {2};
     ExecOneLayer(num_input_channel, num_input_height, num_input_width, num_kernel_height, num_kernel_width, stride, num_output_channel, availableValueSet);
   };

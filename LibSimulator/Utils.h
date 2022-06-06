@@ -16,4 +16,11 @@ namespace simulator
     std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>> &weightMemories
   );
 
+  void computeConv(
+    std::vector<std::vector<std::vector<int>>> &inputValues,
+    std::vector<std::vector<std::vector<std::vector<int>>>> &weightValues,
+    std::vector<std::vector<std::vector<int>>> &outputValues,
+    int stride
+  );
+
 }
