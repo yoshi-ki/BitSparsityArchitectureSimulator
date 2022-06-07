@@ -18,10 +18,15 @@ namespace simulator::performanceTest{
     int val = 0;
     for (int i = 0; i < n-1; i++){
       bool isOne = rand() % 100 + 1 >= bitSparsity;
-      val = isOne ? (val + 2 ^ i) : val;
+      val = isOne ? (val + (1 << i)) : val;
     }
-    bool isOne = rand() % 100 + 1 >= bitSparsity;
-    val = isOne ? val - 2 ^ (n - 1) : val;
+
+    // randomly prepare minus and plus
+    bool isOne = rand() % 100 + 1 >= 50;
+    val = isOne ? val - (1 << (n - 1)) : val;
+    // if (bitSparsity == 0){
+    //   std::cout << bitSparsity << " " << val << std::endl;
+    // }
     return val;
   }
   void makeSparseInputWithPercent(
@@ -167,10 +172,11 @@ int main(int argc, char** argv)
               num_output_channels[layer],
               sparsity,
               sparsity);
-      std::cout << "sparsity: " << sparsity << " layer: " << layer << " cycle: " << cycle << std::endl;
+      // std::cout << "sparsity: " << sparsity << " layer: " << layer << " cycle: " << cycle << std::endl;
       sumCycle = sumCycle + cycle;
     }
     sumCycles[itr] = sumCycle;
+    std::cout << "sparsity: " << sparsity << " cycle: " << sumCycle << std::endl;
   }
   plt::plot(sumCycles);
   plt::save("vgg11.pdf");
