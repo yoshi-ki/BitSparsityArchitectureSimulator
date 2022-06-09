@@ -137,13 +137,13 @@ int main(int argc, char** argv)
 {
   // test
   int num_layer = 2;
-  auto num_input_channels = std::vector<int> {  3,   2};
-  auto num_input_heights  = std::vector<int> {  4,   2};
-  auto num_input_widths   = std::vector<int> {  4,   2};
-  auto num_kernel_heights = std::vector<int> {  3,   1};
-  auto num_kernel_widths  = std::vector<int> {  3,   1};
+  auto num_input_channels = std::vector<int> {  100,   512};
+  auto num_input_heights  = std::vector<int> {  1,   1};
+  auto num_input_widths   = std::vector<int> {  1,   1};
+  auto num_kernel_heights = std::vector<int> {  1,   1};
+  auto num_kernel_widths  = std::vector<int> {  1,   1};
   auto strides            = std::vector<int> {  1,   1};
-  auto num_output_channels = std::vector<int> {64, 128};
+  auto num_output_channels = std::vector<int> {512, 10};
 
   // VGG11 * ImageNet
   // int num_layer = 11;
@@ -155,9 +155,10 @@ int main(int argc, char** argv)
   // auto strides            = std::vector<int> {  1,   1,   1,   1,   1,   1,   1,   1,     1,    1,    1};
   // auto num_output_channels = std::vector<int> {64, 128, 256, 256, 512, 512, 512, 512,  4096, 4096, 1000};
 
-  auto sumCycles = std::vector<int>(11);
+  auto xaxis = std::vector<int>(101);
+  auto sumCycles = std::vector<int>(101);
   int itr = 0;
-  for (int sparsity = 0; sparsity <= 100; sparsity = sparsity + 10)
+  for (int sparsity = 0; sparsity <= 100; sparsity = sparsity + 1)
   {
     int sumCycle = 0;
     for (int layer = 0; layer < num_layer; layer++){
@@ -176,6 +177,7 @@ int main(int argc, char** argv)
       sumCycle = sumCycle + cycle;
     }
     sumCycles[itr] = sumCycle;
+    itr++;
     std::cout << "sparsity: " << sparsity << " cycle: " << sumCycle << std::endl;
   }
   plt::plot(sumCycles);
