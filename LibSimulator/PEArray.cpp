@@ -3,6 +3,7 @@
 #include <iostream>
 #include <stdexcept> // std::runtime_error
 #include "math.h"
+#include <omp.h>
 
 namespace simulator
 {
@@ -89,6 +90,8 @@ namespace simulator
 
     // we use
     std::vector<std::vector<int>> outputOfPEs(num_PE_height, std::vector<int>(num_PE_width));
+    // #pragma omp parallel for
+    #pragma omp parallel num_threads(4)
     for (int h = 0; h < num_PE_height; h++){
       for (int w = 0; w < num_PE_width; w++){
         outputOfPEs[h][w] = PEs[h][w].execute_one_step(inputsForPEs[w], weightsForPEs[h]);

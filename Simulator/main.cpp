@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <iostream>
+#include <omp.h>
 
 #include "PE.h"
 

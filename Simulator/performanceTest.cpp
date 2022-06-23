@@ -4,6 +4,7 @@
 #include "PE.h"
 #include "PEArray.h"
 #include "Utils.h"
+#include <omp.h>
 
 #include "matplotlibcpp.h"
 namespace plt = matplotlibcpp;
