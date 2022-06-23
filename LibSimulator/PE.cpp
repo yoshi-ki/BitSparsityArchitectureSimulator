@@ -1,6 +1,7 @@
 #include "PE.h"
 #include <iostream>
 #include <stdexcept> // std::runtime_error
+#include <omp.h>
 
 namespace simulator
 {
@@ -14,6 +15,7 @@ namespace simulator
   )
   {
     // compute 16 multiplications
+    // #pragma omp parallel for
     for (int i = 0; i < num_PE_parallel; i++){
       // comment out for optimization
       // if (bitActivations.bitInputValue[i] >= 8 || bitWeights.bitInputValue[i] >= 8){

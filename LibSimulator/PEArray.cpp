@@ -99,7 +99,7 @@ namespace simulator
     // clock_t start3 = clock();
     // we use
     // std::vector<std::vector<int>> outputOfPEs(num_PE_height, std::vector<int>(num_PE_width));
-    #pragma omp parallel num_threads(4)
+    // #pragma omp parallel for
     for (int h = 0; h < num_PE_height; h++)
     {
       for (int w = 0; w < num_PE_width; w++){
