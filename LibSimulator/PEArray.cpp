@@ -55,6 +55,11 @@ namespace simulator
 
     decodedInputs = v<DecodedRegister>(num_PE_width, DecodedRegister{v<v<unsigned int>>(num_PE_parallel, v<unsigned>(num_PE_parallel)), v<v<bool>>(num_PE_parallel, v<bool>(8)), v<v<bool>>(num_PE_parallel, v<bool>(8))});
     decodedWeights = v<DecodedRegister>(num_PE_height, DecodedRegister{v<v<unsigned int>>(num_PE_parallel, v<unsigned>(num_PE_parallel)), v<v<bool>>(num_PE_parallel, v<bool>(8)), v<v<bool>>(num_PE_parallel, v<bool>(8))});
+
+    outputOfPEs = v<v<int>>(num_PE_height, std::vector<int>(num_PE_width));
+
+    inputsForPEs = std::vector<PEInput>(num_PE_width, PEInput{v<unsigned int>(num_PE_parallel), v<bool>(num_PE_parallel), v<bool>(num_PE_parallel)});
+    weightsForPEs = std::vector<PEInput>(num_PE_height, PEInput{v<unsigned int>(num_PE_parallel), v<bool>(num_PE_parallel), v<bool>(num_PE_parallel)});
   }
 
   bool PEArray::execute_one_step()
@@ -69,7 +74,7 @@ namespace simulator
       return busy;
     }
 
-    clock_t start1 = clock();
+    // clock_t start1 = clock();
 
     // Initialize bit representations vector. 8 is for the max bit size of the value
     // decodedInputs = v<DecodedRegister>(num_PE_width, DecodedRegister{v<v<unsigned int>>(num_PE_parallel, v<unsigned>(num_PE_parallel)), v<v<bool>>(num_PE_parallel, v<bool>(8)), v<v<bool>>(num_PE_parallel, v<bool>(8))});
@@ -78,22 +83,22 @@ namespace simulator
     // decode values (this circuit always run) (just look at the first element and do not change fifo)
     decodeValuesToBits(inputValuesFifos, decodedInputs);
     decodeValuesToBits(weightValuesFifos, decodedWeights);
-
-    clock_t start2 = clock();
+    // clock_t start2 = clock();
 
     // based on the PE controller status, prepare input for PEs.
     // inputsForPEs and weightsForPEs are represented by bit representation.
-    auto inputsForPEs = std::vector<PEInput>(num_PE_width, PEInput{v<unsigned int>(num_PE_parallel), v<bool>(num_PE_parallel), v<bool>(num_PE_parallel)});
-    auto weightsForPEs = std::vector<PEInput>(num_PE_height, PEInput{v<unsigned int>(num_PE_parallel), v<bool>(num_PE_parallel), v<bool>(num_PE_parallel)});
+    // auto inputsForPEs = std::vector<PEInput>(num_PE_width, PEInput{v<unsigned int>(num_PE_parallel), v<bool>(num_PE_parallel), v<bool>(num_PE_parallel)});
+    // auto weightsForPEs = std::vector<PEInput>(num_PE_height, PEInput{v<unsigned int>(num_PE_parallel), v<bool>(num_PE_parallel), v<bool>(num_PE_parallel)});
     // we check the pe status and decide we send values or not and which to send for PEs.
     createInputForPEsBasedOnControllerStatus(decodedInputs, inputControllerStatusForPEs, inputsForPEs, num_PE_width);
     createInputForPEsBasedOnControllerStatus(decodedWeights, weightControllerStatusForPEs, weightsForPEs, num_PE_height);
 
-    clock_t start3 = clock();
-
+    // clock_t start3 = clock();
     // we use
-    std::vector<std::vector<int>> outputOfPEs(num_PE_height, std::vector<int>(num_PE_width));
-    for (int h = 0; h < num_PE_height; h++){
+    // std::vector<std::vector<int>> outputOfPEs(num_PE_height, std::vector<int>(num_PE_width));
+    #pragma omp parallel for
+    for (int h = 0; h < num_PE_height; h++)
+    {
       for (int w = 0; w < num_PE_width; w++){
         outputOfPEs[h][w] = PEs[h][w].execute_one_step(inputsForPEs[w], weightsForPEs[h]);
         // std::cout << h << " " << w << " " << outputOfPEs[h][w] << std::endl;
@@ -107,14 +112,14 @@ namespace simulator
       }
     }
 
-    clock_t start4 = clock();
+    // clock_t start4 = clock();
 
     // update pe status
     updatePEStatus(inputControllerStatusForPEs, weightControllerStatusForPEs, inputValuesFifos, weightValuesFifos, decodedInputs, decodedWeights);
 
-    clock_t end = clock();
+    // clock_t end = clock();
 
-    std::cout << static_cast<double>(start2 - start1) << " " << static_cast<double>(start3 - start2) << " " << static_cast<double>(start4 - start3) << " " << static_cast<double>(end - start4)  << std::endl;
+    // std::cout << static_cast<double>(start2 - start1) << " " << static_cast<double>(start3 - start2) << " " << static_cast<double>(start4 - start3) << " " << static_cast<double>(end - start4)  << std::endl;
 
     bool finishedPsumExecution = isFinishedPSumExecution(inputControllerStatusForPEs, weightControllerStatusForPEs);
 

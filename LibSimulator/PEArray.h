@@ -75,6 +75,12 @@ namespace simulator
       std::vector<DecodedRegister> decodedInputs;
       std::vector<DecodedRegister> decodedWeights;
 
+      // output of PEs
+      std::vector<std::vector<int>> outputOfPEs;
+
+      std::vector<PEInput> inputsForPEs;
+      std::vector<PEInput> weightsForPEs;
+
       // states to control PEs
       // std::vector<bool> isInputFifoWaiting;
       // std::vector<bool> isWeightFifoWaiting;

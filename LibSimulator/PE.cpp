@@ -15,9 +15,11 @@ namespace simulator
   {
     // compute 16 multiplications
     for (int i = 0; i < num_PE_parallel; i++){
-      if (bitActivations.bitInputValue[i] >= 8 || bitWeights.bitInputValue[i] >= 8){
-        throw std::runtime_error("error!");
-      }
+      // comment out for optimization
+      // if (bitActivations.bitInputValue[i] >= 8 || bitWeights.bitInputValue[i] >= 8){
+      //   throw std::runtime_error("error!");
+      // }
+
       if (bitActivations.isValid[i] && bitWeights.isValid[i]){
         // TODO: change this to 22 bit integer
         auto multIsNegative = bitActivations.isNegative[i] ^ bitWeights.isNegative[i];

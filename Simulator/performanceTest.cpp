@@ -136,24 +136,24 @@ namespace simulator::performanceTest{
 int main(int argc, char** argv)
 {
   // test
-  int num_layer = 2;
-  auto num_input_channels = std::vector<int> {  100,   512};
-  auto num_input_heights  = std::vector<int> {  1,   1};
-  auto num_input_widths   = std::vector<int> {  1,   1};
-  auto num_kernel_heights = std::vector<int> {  1,   1};
-  auto num_kernel_widths  = std::vector<int> {  1,   1};
-  auto strides            = std::vector<int> {  1,   1};
-  auto num_output_channels = std::vector<int> {512, 10};
+  // int num_layer = 2;
+  // auto num_input_channels = std::vector<int> {  100,   512};
+  // auto num_input_heights  = std::vector<int> {  1,   1};
+  // auto num_input_widths   = std::vector<int> {  1,   1};
+  // auto num_kernel_heights = std::vector<int> {  1,   1};
+  // auto num_kernel_widths  = std::vector<int> {  1,   1};
+  // auto strides            = std::vector<int> {  1,   1};
+  // auto num_output_channels = std::vector<int> {512, 10};
 
   // VGG11 * ImageNet
-  // int num_layer = 11;
-  // auto num_input_channels = std::vector<int> {  3,  64, 128, 256, 256, 512, 512, 512, 25088, 4096, 4096};
-  // auto num_input_heights  = std::vector<int> { 32,  16,   8,   8,   4,   4,   2,   2,     1,    1,    1};
-  // auto num_input_widths   = std::vector<int> { 32, 112,   8,   8,   4,   4,   2,   2,     1,    1,    1};
-  // auto num_kernel_heights = std::vector<int> {  3,   3,   3,   3,   3,   3,   3,   3,     1,    1,    1};
-  // auto num_kernel_widths  = std::vector<int> {  3,   3,   3,   3,   3,   3,   3,   3,     1,    1,    1};
-  // auto strides            = std::vector<int> {  1,   1,   1,   1,   1,   1,   1,   1,     1,    1,    1};
-  // auto num_output_channels = std::vector<int> {64, 128, 256, 256, 512, 512, 512, 512,  4096, 4096, 1000};
+  int num_layer = 11;
+  auto num_input_channels = std::vector<int> {  3,  64, 128, 256, 256, 512, 512, 512, 25088, 4096, 4096};
+  auto num_input_heights  = std::vector<int> { 32,  16,   8,   8,   4,   4,   2,   2,     1,    1,    1};
+  auto num_input_widths   = std::vector<int> { 32, 112,   8,   8,   4,   4,   2,   2,     1,    1,    1};
+  auto num_kernel_heights = std::vector<int> {  3,   3,   3,   3,   3,   3,   3,   3,     1,    1,    1};
+  auto num_kernel_widths  = std::vector<int> {  3,   3,   3,   3,   3,   3,   3,   3,     1,    1,    1};
+  auto strides            = std::vector<int> {  1,   1,   1,   1,   1,   1,   1,   1,     1,    1,    1};
+  auto num_output_channels = std::vector<int> {64, 128, 256, 256, 512, 512, 512, 512,  4096, 4096, 1000};
 
   auto xaxis = std::vector<int>(101);
   auto sumCycles = std::vector<int>(101);
