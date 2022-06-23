@@ -139,7 +139,7 @@ namespace simulator::tests
     for (int output_channel = 0; output_channel < num_output_channel; output_channel++){
       for (int output_height = 0; output_height < num_output_height; output_height++){
         for (int output_width = 0; output_width < num_output_width; output_width++){
-          std::cout << outputValues[output_channel][output_height][output_width] << std::endl;
+          // std::cout << outputValues[output_channel][output_height][output_width] << std::endl;
           // std::cout << "check real output" << std::endl;
           ASSERT_THAT(peArray.outputMemory[output_channel][output_height][output_width], Eq(outputValues[output_channel][output_height][output_width])) << ("output_channel, output_height, output_width = " + std::to_string(output_channel) + " " + std::to_string(output_height) + " " + std::to_string(output_width));
         }
