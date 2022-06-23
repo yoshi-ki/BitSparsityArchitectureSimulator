@@ -18,10 +18,15 @@ namespace simulator::performanceTest{
     int val = 0;
     for (int i = 0; i < n-1; i++){
       bool isOne = rand() % 100 + 1 >= bitSparsity;
-      val = isOne ? (val + 2 ^ i) : val;
+      val = isOne ? (val + (1 << i)) : val;
     }
-    bool isOne = rand() % 100 + 1 >= bitSparsity;
-    val = isOne ? val - 2 ^ (n - 1) : val;
+
+    // randomly prepare minus and plus
+    bool isOne = rand() % 100 + 1 >= 50;
+    val = isOne ? val - (1 << (n - 1)) : val;
+    // if (bitSparsity == 0){
+    //   std::cout << bitSparsity << " " << val << std::endl;
+    // }
     return val;
   }
   void makeSparseInputWithPercent(
@@ -131,28 +136,28 @@ namespace simulator::performanceTest{
 int main(int argc, char** argv)
 {
   // test
-  int num_layer = 2;
-  auto num_input_channels = std::vector<int> {  3,   2};
-  auto num_input_heights  = std::vector<int> {  4,   2};
-  auto num_input_widths   = std::vector<int> {  4,   2};
-  auto num_kernel_heights = std::vector<int> {  3,   1};
-  auto num_kernel_widths  = std::vector<int> {  3,   1};
-  auto strides            = std::vector<int> {  1,   1};
-  auto num_output_channels = std::vector<int> {64, 128};
+  //int num_layer = 2;
+  //auto num_input_channels = std::vector<int> {  3,   2};
+  //auto num_input_heights  = std::vector<int> {  4,   2};
+  //auto num_input_widths   = std::vector<int> {  4,   2};
+  //auto num_kernel_heights = std::vector<int> {  3,   1};
+  //auto num_kernel_widths  = std::vector<int> {  3,   1};
+  //auto strides            = std::vector<int> {  1,   1};
+  //auto num_output_channels = std::vector<int> {64, 128};
 
   // VGG11 * ImageNet
-  // int num_layer = 11;
-  // auto num_input_channels = std::vector<int> {  3,  64, 128, 256, 256, 512, 512, 512, 25088, 4096, 4096};
-  // auto num_input_heights  = std::vector<int> { 32,  16,   8,   8,   4,   4,   2,   2,     1,    1,    1};
-  // auto num_input_widths   = std::vector<int> { 32, 112,   8,   8,   4,   4,   2,   2,     1,    1,    1};
-  // auto num_kernel_heights = std::vector<int> {  3,   3,   3,   3,   3,   3,   3,   3,     1,    1,    1};
-  // auto num_kernel_widths  = std::vector<int> {  3,   3,   3,   3,   3,   3,   3,   3,     1,    1,    1};
-  // auto strides            = std::vector<int> {  1,   1,   1,   1,   1,   1,   1,   1,     1,    1,    1};
-  // auto num_output_channels = std::vector<int> {64, 128, 256, 256, 512, 512, 512, 512,  4096, 4096, 1000};
+  int num_layer = 11;
+  auto num_input_channels = std::vector<int> {  3,  64, 128, 256, 256, 512, 512, 512, 25088, 4096, 4096};
+  auto num_input_heights  = std::vector<int> { 32,  16,   8,   8,   4,   4,   2,   2,     1,    1,    1};
+  auto num_input_widths   = std::vector<int> { 32, 112,   8,   8,   4,   4,   2,   2,     1,    1,    1};
+  auto num_kernel_heights = std::vector<int> {  3,   3,   3,   3,   3,   3,   3,   3,     1,    1,    1};
+  auto num_kernel_widths  = std::vector<int> {  3,   3,   3,   3,   3,   3,   3,   3,     1,    1,    1};
+  auto strides            = std::vector<int> {  1,   1,   1,   1,   1,   1,   1,   1,     1,    1,    1};
+  auto num_output_channels = std::vector<int> {64, 128, 256, 256, 512, 512, 512, 512,  4096, 4096, 1000};
 
-  auto sumCycles = std::vector<int>(11);
+  auto sumCycles = std::vector<int>(15);
   int itr = 0;
-  for (int sparsity = 0; sparsity <= 100; sparsity = sparsity + 10)
+  for (int sparsity = 85; sparsity <= 99; sparsity = sparsity + 1)
   {
     int sumCycle = 0;
     for (int layer = 0; layer < num_layer; layer++){
@@ -167,13 +172,13 @@ int main(int argc, char** argv)
               num_output_channels[layer],
               sparsity,
               sparsity);
-      std::cout << "sparsity: " << sparsity << " layer: " << layer << " cycle: " << cycle << std::endl;
       sumCycle = sumCycle + cycle;
     }
     sumCycles[itr] = sumCycle;
+    std::cout << "sparsity: " << sparsity << " cycle: " << sumCycle << std::endl;
   }
-  plt::plot(sumCycles);
-  plt::save("vgg11.pdf");
+  //plt::plot(sumCycles);
+  //plt::save("vgg11.pdf");
   // plt::show();
 
   return EXIT_SUCCESS;

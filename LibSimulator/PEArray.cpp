@@ -2,6 +2,7 @@
 #include "PE.h"
 #include <iostream>
 #include <stdexcept> // std::runtime_error
+#include "math.h"
 
 namespace simulator
 {
@@ -60,7 +61,6 @@ namespace simulator
     // if all of the value fifos become empty, we finish execution
     if(isLayerFinished(inputValuesFifos, weightValuesFifos)){
       // output for debug
-      std::cout << "finished layer execution" << std::endl;
       // for (int output_channel = 0; output_channel < num_output_channel; output_channel++){
       //   for (int output_heigh = 0; output_heigh < output_height; output_heigh++){
       //     for (int output_widt = 0; output_widt < output_width; output_widt++){
