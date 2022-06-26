@@ -26,6 +26,7 @@ namespace simulator
         // TODO: change this to 22 bit integer
         auto multIsNegative = bitActivations.isNegative[i] ^ bitWeights.isNegative[i];
         auto multExp = bitActivations.bitInputValue[i] + bitWeights.bitInputValue[i];
+        // #pragma omp atomic
         psum += multIsNegative ? (-(1 << multExp)) : (1 << multExp);
         // std::cout << psum << std::endl;
       }

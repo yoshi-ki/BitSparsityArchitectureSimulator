@@ -6,7 +6,7 @@ endif()
 
 add_executable(Simulator main.cpp)
 add_executable(PerformanceTest performanceTest.cpp)
-target_compile_options(PerformanceTest PUBLIC -O3 -Wall -fopenmp -lomp)
+target_compile_options(PerformanceTest PUBLIC -O3 -Wall -fopenmp -lomp -mtune=native -march=native)
 
 find_package(Python3 COMPONENTS Development NumPy)
 target_include_directories(PerformanceTest PRIVATE ${Python3_INCLUDE_DIRS} ${Python3_NumPy_INCLUDE_DIRS})

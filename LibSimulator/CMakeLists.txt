@@ -7,4 +7,4 @@ if(OpenMP_FOUND)
 endif()
 
 target_include_directories(LibSimulator PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_compile_options(LibSimulator PUBLIC -O3 -Wall -fopenmp -lomp)
+target_compile_options(LibSimulator PUBLIC -O3 -Wall -fopenmp -lomp -mtune=native -march=native)
