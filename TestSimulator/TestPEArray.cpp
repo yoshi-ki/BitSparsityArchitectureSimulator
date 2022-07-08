@@ -12,36 +12,6 @@ using namespace testing;
 
 namespace simulator::tests
 {
-  // TODO: check why it consumes a lot of time
-	// TEST(PEArrayTests, InitializePEArray) {
-  //   std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>> inputMemories;
-  //   std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>> weightMemories;
-  //   int num_input_channel;
-  //   int num_input_height;
-  //   int num_input_width;
-  //   int num_kernel_height;
-  //   int num_kernel_width;
-  //   int stride;
-  //   int num_output_channel;
-
-  //   simulator::PEArray peArray = simulator::PEArray(
-  //     inputMemories,
-  //     weightMemories,
-  //     num_input_channel,
-  //     num_input_height,
-  //     num_input_width,
-  //     num_kernel_height,
-  //     num_kernel_width,
-  //     stride,
-  //     num_output_channel
-  //   );
-  //   ASSERT_THAT(0, Eq(0));
-	// }
-
-  // TEST(PEArrayTests, convertInputMemoriesToFifos){
-  //   convertInputMemoriesToFifos(inputMemories, inputValuesFifos, num_input_channel, input_height, input_width, kernel_height, kernel_width, stride, num_output_channel);
-  // }
-
   TEST(PEArrayTests, decodeValuesToBits){
     auto valueFifos = v<v<std::deque<FIFOValues>>>(num_PE_width, v<std::deque<FIFOValues>>(num_PE_parallel));
     auto decodedInputs = v<DecodedRegister>(num_PE_width, DecodedRegister{v<v<unsigned int>>(num_PE_parallel, v<unsigned>(num_PE_parallel)), v<v<bool>>(num_PE_parallel, v<bool>(8)), v<v<bool>>(num_PE_parallel, v<bool>(8))});
