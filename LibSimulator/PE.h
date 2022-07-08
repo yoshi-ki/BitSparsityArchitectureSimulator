@@ -20,7 +20,6 @@ namespace simulator
         PEInput bitWeights
       );
 
-      // for test and mock
       // output: 22bit signed
       int get_psum();
 

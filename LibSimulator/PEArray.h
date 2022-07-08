@@ -62,8 +62,6 @@ namespace simulator
       /* member */
 
       // input and output memory
-      // std::vector<std::vector<int>> inputMemories;
-      // std::vector<std::vector<int>> weightMemories;
       std::vector<std::vector<std::vector<int>>> outputMemory;
       int outputStatus;
 
@@ -82,10 +80,6 @@ namespace simulator
       std::vector<PEInput> weightsForPEs;
 
       // states to control PEs
-      // std::vector<bool> isInputFifoWaiting;
-      // std::vector<bool> isWeightFifoWaiting;
-      // std::vector<int> indexInputBit;
-      // std::vector<int> indexWeightBit;
       std::vector<PEControllerStatus> inputControllerStatusForPEs;
       std::vector<PEControllerStatus> weightControllerStatusForPEs;
 
