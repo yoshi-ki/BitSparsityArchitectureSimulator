@@ -1,7 +1,7 @@
-#include "PEArray.h"
-#include "PE.h"
-#include "time.h"
+#include "BFloatPEArray.h"
+#include "BFloatPE.h"
 #include "Utils.h"
+#include "time.h"
 #include <iostream>
 #include <stdexcept> // std::runtime_error
 #include "math.h"
@@ -13,12 +13,12 @@ namespace simulator
   // bool that represents the PE Array is computing now or not
 
   // PE Array
-  std::vector<std::vector<simulator::PE>> PEs(num_PE_height, std::vector<simulator::PE>(num_PE_width, PE()));
+  std::vector<std::vector<simulator::BFloatPE>> PEs(num_PE_height, std::vector<simulator::BFloatPE>(num_PE_width, BFloatPE()));
 
   // for unit test
-  PEArray::PEArray(){};
+  BFloatPEArray::BFloatPEArray(){};
 
-  PEArray::PEArray(
+  BFloatPEArray::BFloatPEArray(
     std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>& inputMemories,
     std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>>& weightMemories,
     int num_input_channel,
@@ -32,16 +32,16 @@ namespace simulator
   {
     busy = true;
 
-    PEArray::outputStatus = 0;
-    PEArray::input_height = input_height;
-    PEArray::input_width = input_width;
-    PEArray::kernel_height = kernel_height;
-    PEArray::kernel_width = kernel_height;
-    PEArray::stride = stride;
-    PEArray::num_output_channel = num_output_channel;
+    BFloatPEArray::outputStatus = 0;
+    BFloatPEArray::input_height = input_height;
+    BFloatPEArray::input_width = input_width;
+    BFloatPEArray::kernel_height = kernel_height;
+    BFloatPEArray::kernel_width = kernel_height;
+    BFloatPEArray::stride = stride;
+    BFloatPEArray::num_output_channel = num_output_channel;
 
-    PEArray::output_height = ((input_height - kernel_height) / stride) + 1;
-    PEArray::output_width = ((input_width - kernel_width) / stride) + 1;
+    BFloatPEArray::output_height = ((input_height - kernel_height) / stride) + 1;
+    BFloatPEArray::output_width = ((input_width - kernel_width) / stride) + 1;
 
     outputMemory = std::vector<std::vector<std::vector<int>>>(num_output_channel, std::vector<std::vector<int>>(output_height, std::vector<int>(output_width)));
 
@@ -66,7 +66,7 @@ namespace simulator
     weightsForPEs = std::vector<PEInput>(num_PE_height, PEInput{v<unsigned int>(num_PE_parallel), v<bool>(num_PE_parallel), v<bool>(num_PE_parallel)});
   }
 
-  bool PEArray::execute_one_step()
+  bool BFloatPEArray::execute_one_step()
   {
     // if all of the value fifos become empty, we finish execution
     if(isLayerFinished(inputValuesFifos, weightValuesFifos)){
@@ -116,5 +116,4 @@ namespace simulator
     }
     return busy;
   };
-
 }
