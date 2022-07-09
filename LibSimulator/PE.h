@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include "PEArray.h"
+#include "Utils.h"
 
 namespace simulator
 {

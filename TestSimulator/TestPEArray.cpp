@@ -25,7 +25,7 @@ namespace simulator::tests
       }
     }
     auto peArray = PEArray();
-    peArray.decodeValuesToBits(valueFifos, decodedInputs);
+    simulator::decodeValuesToBits(valueFifos, decodedInputs);
     // std::cout << "actual" << bitInputs[0][0][0] << std::endl;
     for (int memoryIndex = 0; memoryIndex < num_PE_width; memoryIndex++){
       for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
@@ -50,7 +50,7 @@ namespace simulator::tests
         }
       }
     }
-    peArray.decodeValuesToBits(valueFifos, decodedInputs);
+    simulator::decodeValuesToBits(valueFifos, decodedInputs);
     // std::cout << "actual" << bitInputs[0][0][0] << std::endl;
     for (int memoryIndex = 0; memoryIndex < num_PE_width; memoryIndex++){
       for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){

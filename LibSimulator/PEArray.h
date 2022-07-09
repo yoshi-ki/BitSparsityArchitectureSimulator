@@ -1,41 +1,42 @@
 #pragma once
 #include <vector>
 #include <deque>
+#include "Utils.h"
 
 template<class T>
 using v = std::vector<T>;
 
 namespace simulator
 {
-  const int num_PE_height = 8;
-  const int num_PE_width = 4;
-  const int num_PE_parallel = 16; // PE consumes 16 bits at once
-  const int num_bit_size = 8;
+  // const int num_PE_height = 8;
+  // const int num_PE_width = 4;
+  // const int num_PE_parallel = 16; // PE consumes 16 bits at once
+  // const int num_bit_size = 8;
 
-  struct PEControllerStatus{
-    std::vector<bool> isWaiting = std::vector<bool>(num_PE_parallel);
-    std::vector<int> nextProcessIndex = std::vector<int>(num_PE_parallel);
-    std::vector<bool> finishedPSum = std::vector<bool>(num_PE_parallel);
-  };
+  // struct PEControllerStatus{
+  //   std::vector<bool> isWaiting = std::vector<bool>(num_PE_parallel);
+  //   std::vector<int> nextProcessIndex = std::vector<int>(num_PE_parallel);
+  //   std::vector<bool> finishedPSum = std::vector<bool>(num_PE_parallel);
+  // };
 
-  struct FIFOValues{
-    int value;
-    bool isLast;
-  };
+  // struct FIFOValues{
+  //   int value;
+  //   bool isLast;
+  // };
 
-  struct DecodedRegister{
-    // it is for 16 inputs and values just decoded
-    std::vector<std::vector<unsigned int>> bitInputValues; // [inputChannel][bitIndex]
-    std::vector<std::vector<bool>> isNegatives;
-    std::vector<std::vector<bool>> isValids;
-  };
+  // struct DecodedRegister{
+  //   // it is for 16 inputs and values just decoded
+  //   std::vector<std::vector<unsigned int>> bitInputValues; // [inputChannel][bitIndex]
+  //   std::vector<std::vector<bool>> isNegatives;
+  //   std::vector<std::vector<bool>> isValids;
+  // };
 
-  struct PEInput{
-    // it is for 16 inputs
-    std::vector<unsigned int> bitInputValue;
-    std::vector<bool> isNegative;
-    std::vector<bool> isValid;
-  };
+  // struct PEInput{
+  //   // it is for 16 inputs
+  //   std::vector<unsigned int> bitInputValue;
+  //   std::vector<bool> isNegative;
+  //   std::vector<bool> isValid;
+  // };
 
   class PEArray
   {

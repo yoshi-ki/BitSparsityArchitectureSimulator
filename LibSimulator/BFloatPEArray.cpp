@@ -20,7 +20,9 @@ namespace simulator
 
   BFloatPEArray::BFloatPEArray(
     std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>& inputMemories,
+    std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>& inputExpMemories,
     std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>>& weightMemories,
+    std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>>& weightExpMemories,
     int num_input_channel,
     int input_height,
     int input_width,
@@ -50,7 +52,7 @@ namespace simulator
 
     // convert input activation and weight to the bit format,
     // because we only need bit format value
-    convertInputMemoriesToFifos(inputMemories, inputValuesFifos, num_input_channel, input_height, input_width, kernel_height, kernel_width, stride, num_output_channel);
+    convertInputMemoriesToFifos(inputMemories, inputExpMemories, inputValuesFifos, num_input_channel, input_height, input_width, kernel_height, kernel_width, stride, num_output_channel);
     convertWeightMemoriesToFifos(weightMemories, weightValuesFifos, num_input_channel, input_height, input_width, kernel_height, kernel_width, stride, num_output_channel);
 
     // Initialize states to control PEs

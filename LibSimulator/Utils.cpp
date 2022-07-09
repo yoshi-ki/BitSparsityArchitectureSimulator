@@ -171,6 +171,67 @@ namespace simulator
     }
   }
 
+  // void convertInputMemoriesToFifos(
+  //   std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>& inputMemories,
+  //   std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>& inputExpMemories,
+  //   std::vector<std::vector<std::deque<BFloatFIFOValues>>>& inputValuesFifos,
+  //   int num_input_channel,
+  //   int input_height,
+  //   int input_width,
+  //   int kernel_height,
+  //   int kernel_width,
+  //   int stride,
+  //   int num_output_channel
+  // )
+  // {
+  //   int iterationForOutputChannelGroup = num_output_channel / num_PE_height + fmin(num_output_channel % num_PE_height, 1);
+  //   int num_input_channel_group = num_input_channel / num_PE_parallel + fmin(num_input_channel % num_PE_parallel, 1);
+  //   // we need to set the same values to fifo for different output channel groups
+  //   for (int iter = 0; iter < iterationForOutputChannelGroup; iter++){
+  //     for (int memoryIndex = 0; memoryIndex < inputMemories.size(); memoryIndex++){
+  //       // input is divided into four areas, so we need to compute the size of the each areas
+
+  //       int num_output_height = ((input_height - kernel_height) / stride) + 1;
+  //       int num_output_width = ((input_width - kernel_width) / stride) + 1;
+  //       int firstGroupOutputHeight = num_output_height / 2 + num_output_height % 2;
+  //       int firstGroupOutputWidth = num_output_width / 2 + num_output_width % 2;
+  //       int partialInputHeight = (memoryIndex == 0 || memoryIndex == 1) ? firstGroupOutputHeight : num_output_height - firstGroupOutputHeight;
+  //       int partialInputWidth = (memoryIndex == 0 || memoryIndex == 2) ? firstGroupOutputWidth : num_output_width - firstGroupOutputWidth;
+
+  //       // start position of window
+  //       for (int windowStartHeight = 0; windowStartHeight < partialInputHeight; windowStartHeight = windowStartHeight + stride){
+  //         for (int windowStartWidth = 0; windowStartWidth < partialInputWidth; windowStartWidth = windowStartWidth + stride){
+  //           for (int kh = 0; kh < kernel_height; kh++){
+  //             for (int kw = 0; kw < kernel_width; kw++){
+  //               for (int channelGroup = 0; channelGroup < num_input_channel_group; channelGroup++){
+  //                 // input
+  //                 for (int input_channel = 0; input_channel < num_PE_parallel; input_channel++){
+  //                   inputValuesFifos[memoryIndex][input_channel].push_back(
+  //                       BFloatFIFOValues{
+  //                           inputMemories[memoryIndex][windowStartHeight + kh][windowStartWidth + kw][channelGroup][input_channel],
+  //                           inputExpMemories[memoryIndex][windowStartHeight + kh][windowStartWidth + kw][channelGroup][input_channel],
+  //                           false});
+  //                 }
+  //               }
+  //             }
+  //           }
+  //           // insert end of the psum
+  //           for (int input_channel = 0; input_channel < num_PE_parallel; input_channel++){
+  //             if(inputValuesFifos[memoryIndex][input_channel].empty()){
+  //               continue;
+  //             }
+
+  //             auto lastVal = inputValuesFifos[memoryIndex][input_channel].back();
+  //             lastVal.isLast= true;
+  //             inputValuesFifos[memoryIndex][input_channel].pop_back();
+  //             inputValuesFifos[memoryIndex][input_channel].push_back(lastVal);
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
+
   void convertWeightMemoriesToFifos(
     std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>>& weightMemories,
     std::vector<std::vector<std::deque<FIFOValues>>>& weightValuesFifos,
