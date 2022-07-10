@@ -8,6 +8,7 @@ namespace simulator
   const int num_PE_width = 4;
   const int num_PE_parallel = 16; // PE consumes 16 bits at once
   const int num_bit_size = 8;
+  const int num_decodedRegister = 8;
 
   struct PEControllerStatus{
     std::vector<bool> isWaiting = std::vector<bool>(num_PE_parallel);
@@ -17,6 +18,12 @@ namespace simulator
 
   struct FIFOValues{
     int value;
+    bool isLast;
+  };
+
+  struct BFloatFIFOValues{
+    int value;
+    int expValue;
     bool isLast;
   };
 
@@ -70,9 +77,38 @@ namespace simulator
     int num_output_channel
   );
 
+  void convertInputMemoriesToFifos(
+    std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>& inputMemories,
+    std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>& inputExpMemories,
+    std::vector<std::vector<std::deque<FIFOValues>>>& inputValuesFifos,
+    std::vector<std::vector<std::deque<int>>>& inputExpFifos,
+    int num_input_channel_group,
+    int input_height,
+    int input_width,
+    int kernel_height,
+    int kernel_width,
+    int stride,
+    int num_output_channel
+  );
+
+
   void convertWeightMemoriesToFifos(
     std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>>& weightMemories,
     std::vector<std::vector<std::deque<FIFOValues>>>& weightValuesFifos,
+    int num_input_channel_group,
+    int input_height,
+    int input_width,
+    int kernel_height,
+    int kernel_width,
+    int stride,
+    int num_output_channel
+  );
+
+  void convertWeightMemoriesToFifos(
+    std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>>& weightMemories,
+    std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>>& weightExpMemories,
+    std::vector<std::vector<std::deque<FIFOValues>>>& weightValuesFifos,
+    std::vector<std::vector<std::deque<int>>>& weightExpFifos,
     int num_input_channel_group,
     int input_height,
     int input_width,
@@ -127,6 +163,18 @@ namespace simulator
     int output_height,
     int output_width,
     int num_output_channel
+  );
+
+  void extractInputExpFromFifos(
+    std::vector<std::vector<std::deque<int>>> inputExpFifos,
+    std::vector<DecodedRegister> decodedInputs,
+    std::vector<int> sharedExpForInputs,
+    std::vector<int> psumShiftedWidths
+  );
+
+  void extractWeightExpFromFifos(
+    std::vector<std::vector<std::deque<int>>> weightExpFifos,
+    std::vector<int> sharedExpForWeights
   );
 
 }

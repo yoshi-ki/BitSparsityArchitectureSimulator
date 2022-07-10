@@ -48,21 +48,28 @@ namespace simulator
     outputMemory = std::vector<std::vector<std::vector<int>>>(num_output_channel, std::vector<std::vector<int>>(output_height, std::vector<int>(output_width)));
 
     inputValuesFifos = std::vector<std::vector<std::deque<FIFOValues>>>(num_PE_width, std::vector<std::deque<FIFOValues>>(num_PE_parallel, std::deque<FIFOValues>()));
+    inputExpFifos = std::vector<std::vector<std::deque<int>>>(num_PE_width, std::vector<std::deque<int>>(num_PE_parallel, std::deque<int>()));
     weightValuesFifos = std::vector<std::vector<std::deque<FIFOValues>>> (num_PE_height, std::vector<std::deque<FIFOValues>>(num_PE_parallel, std::deque<FIFOValues>()));
+    weightExpFifos = std::vector<std::vector<std::deque<int>>>(num_PE_width, std::vector<std::deque<int>>(num_PE_parallel, std::deque<int>()));
 
     // convert input activation and weight to the bit format,
     // because we only need bit format value
-    convertInputMemoriesToFifos(inputMemories, inputExpMemories, inputValuesFifos, num_input_channel, input_height, input_width, kernel_height, kernel_width, stride, num_output_channel);
-    convertWeightMemoriesToFifos(weightMemories, weightValuesFifos, num_input_channel, input_height, input_width, kernel_height, kernel_width, stride, num_output_channel);
+    convertInputMemoriesToFifos(inputMemories, inputExpMemories, inputValuesFifos, inputExpFifos, num_input_channel, input_height, input_width, kernel_height, kernel_width, stride, num_output_channel);
+    convertWeightMemoriesToFifos(weightMemories, weightExpMemories, weightValuesFifos, weightExpFifos, num_input_channel, input_height, input_width, kernel_height, kernel_width, stride, num_output_channel);
 
     // Initialize states to control PEs
     inputControllerStatusForPEs = std::vector<PEControllerStatus>(num_PE_width);
     weightControllerStatusForPEs = std::vector<PEControllerStatus>(num_PE_height);
 
-    decodedInputs = v<DecodedRegister>(num_PE_width, DecodedRegister{v<v<unsigned int>>(num_PE_parallel, v<unsigned>(num_PE_parallel)), v<v<bool>>(num_PE_parallel, v<bool>(8)), v<v<bool>>(num_PE_parallel, v<bool>(8))});
-    decodedWeights = v<DecodedRegister>(num_PE_height, DecodedRegister{v<v<unsigned int>>(num_PE_parallel, v<unsigned>(num_PE_parallel)), v<v<bool>>(num_PE_parallel, v<bool>(8)), v<v<bool>>(num_PE_parallel, v<bool>(8))});
+    decodedInputs = v<DecodedRegister>(num_PE_width, DecodedRegister{v<v<unsigned int>>(num_PE_parallel, v<unsigned>(num_decodedRegister)), v<v<bool>>(num_PE_parallel, v<bool>(num_decodedRegister)), v<v<bool>>(num_PE_parallel, v<bool>(num_decodedRegister))});
+    decodedWeights = v<DecodedRegister>(num_PE_height, DecodedRegister{v<v<unsigned int>>(num_PE_parallel, v<unsigned>(num_decodedRegister)), v<v<bool>>(num_PE_parallel, v<bool>(num_decodedRegister)), v<v<bool>>(num_PE_parallel, v<bool>(num_decodedRegister))});
+
+    sharedExpForInputs = v<int>(num_PE_width);
+    sharedExpForWeights = v<int>(num_PE_height);
+    psumShiftedWidths = v<int>(num_PE_width);
 
     outputOfPEs = v<v<int>>(num_PE_height, std::vector<int>(num_PE_width));
+    outputExpOfPEs = v<v<int>>(num_PE_height, std::vector<int>(num_PE_width));
 
     inputsForPEs = std::vector<PEInput>(num_PE_width, PEInput{v<unsigned int>(num_PE_parallel), v<bool>(num_PE_parallel), v<bool>(num_PE_parallel)});
     weightsForPEs = std::vector<PEInput>(num_PE_height, PEInput{v<unsigned int>(num_PE_parallel), v<bool>(num_PE_parallel), v<bool>(num_PE_parallel)});
@@ -80,6 +87,14 @@ namespace simulator
     decodeValuesToBits(inputValuesFifos, decodedInputs);
     decodeValuesToBits(weightValuesFifos, decodedWeights);
 
+    // exp extraction
+    // do not change fifo itself. change decodedInputs.
+    // extract psumShiftWidth and shift bit position in corresponsindg decodedInputs
+    extractInputExpFromFifos(inputExpFifos, decodedInputs, sharedExpForInputs, psumShiftedWidths);
+
+    // etract weight exp
+    extractWeightExpFromFifos(weightExpFifos, sharedExpForWeights);
+
     // we check the pe status and decide we send values or not and which to send for PEs.
     createInputForPEsBasedOnControllerStatus(decodedInputs, inputControllerStatusForPEs, inputsForPEs, num_PE_width);
     createInputForPEsBasedOnControllerStatus(decodedWeights, weightControllerStatusForPEs, weightsForPEs, num_PE_height);
@@ -88,7 +103,7 @@ namespace simulator
     for (int h = 0; h < num_PE_height; h++)
     {
       for (int w = 0; w < num_PE_width; w++){
-        outputOfPEs[h][w] = PEs[h][w].execute_one_step(inputsForPEs[w], weightsForPEs[h]);
+        PEs[h][w].execute_one_step(inputsForPEs[w], weightsForPEs[h], psumShiftedWidths[w]);
       }
     }
 
@@ -100,6 +115,14 @@ namespace simulator
     // for mock of step 1, we write output if all PEs finish
     if (finishedPsumExecution)
     {
+      // get output of PEs
+      for (int h = 0; h < num_PE_height; h++)
+      {
+        for (int w = 0; w < num_PE_width; w++){
+          outputOfPEs[h][w], outputExpOfPEs[h][w] = PEs[h][w].get_psum(sharedExpForInputs[w],sharedExpForWeights[h]);
+        }
+      }
+
       // TODO: something wired might happen when 0 input
       // write the output of PEs to the corresponding output position
       writeOutput(outputOfPEs, outputMemory, outputStatus, output_height, output_width, num_output_channel);

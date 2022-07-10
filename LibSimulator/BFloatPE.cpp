@@ -11,9 +11,11 @@ namespace simulator
 
   int BFloatPE::execute_one_step(
     PEInput bitActivations,
-    PEInput bitWeights
+    PEInput bitWeights,
+    int psumShiftedWidth
   )
   {
+    psum = psum >> psumShiftedWidth;
     // compute 16 multiplications
     // #pragma omp parallel for
     for (int i = 0; i < num_PE_parallel; i++){
@@ -32,8 +34,9 @@ namespace simulator
     psum = 0;
   }
 
-  int BFloatPE::get_psum(int actExp, int weightExp)
+  std::pair<int,int> BFloatPE::get_psum(int inputExp, int weightExp)
   {
-    return psum;
+    // output bfloat values
+    return std::pair<int,int>{inputExp+weightExp, psum};
   }
 }
