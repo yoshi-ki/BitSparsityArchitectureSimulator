@@ -13,7 +13,7 @@ namespace simulator
   // bool that represents the PE Array is computing now or not
 
   // PE Array
-  std::vector<std::vector<simulator::BFloatPE>> PEs(num_PE_height, std::vector<simulator::BFloatPE>(num_PE_width, BFloatPE()));
+  std::vector<std::vector<simulator::BFloatPE>> BFloatPEs(num_PE_height, std::vector<simulator::BFloatPE>(num_PE_width, BFloatPE()));
 
   // for unit test
   BFloatPEArray::BFloatPEArray(){};
@@ -103,7 +103,7 @@ namespace simulator
     for (int h = 0; h < num_PE_height; h++)
     {
       for (int w = 0; w < num_PE_width; w++){
-        PEs[h][w].execute_one_step(inputsForPEs[w], weightsForPEs[h], psumShiftedWidths[w]);
+        BFloatPEs[h][w].execute_one_step(inputsForPEs[w], weightsForPEs[h], psumShiftedWidths[w]);
       }
     }
 
@@ -119,7 +119,9 @@ namespace simulator
       for (int h = 0; h < num_PE_height; h++)
       {
         for (int w = 0; w < num_PE_width; w++){
-          outputOfPEs[h][w], outputExpOfPEs[h][w] = PEs[h][w].get_psum(sharedExpForInputs[w],sharedExpForWeights[h]);
+          std::pair<int,int> p = BFloatPEs[h][w].get_psum(sharedExpForInputs[w],sharedExpForWeights[h]);
+          outputOfPEs[h][w] = p.first;
+          outputExpOfPEs[h][w] = p.second;
         }
       }
 
@@ -135,7 +137,7 @@ namespace simulator
       // reset state inside PE
       for (int h = 0; h < num_PE_height; h++){
         for (int w = 0; w < num_PE_width; w++){
-          PEs[h][w].reset_state();
+          BFloatPEs[h][w].reset_state();
         }
       }
     }

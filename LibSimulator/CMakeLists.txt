@@ -1,4 +1,4 @@
-add_library(LibSimulator PE.cpp PEArray.cpp Utils.cpp)
+add_library(LibSimulator PE.cpp PEArray.cpp BFloatPE.cpp BFloatPEArray.cpp Utils.cpp)
 
 find_package(OpenMP REQUIRED)
 if(OpenMP_FOUND)
