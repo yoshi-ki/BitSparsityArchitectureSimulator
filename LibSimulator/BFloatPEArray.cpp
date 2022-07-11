@@ -46,11 +46,12 @@ namespace simulator
     BFloatPEArray::output_width = ((input_width - kernel_width) / stride) + 1;
 
     outputMemory = std::vector<std::vector<std::vector<int>>>(num_output_channel, std::vector<std::vector<int>>(output_height, std::vector<int>(output_width)));
+    outputExpMemory = std::vector<std::vector<std::vector<int>>>(num_output_channel, std::vector<std::vector<int>>(output_height, std::vector<int>(output_width)));
 
     inputValuesFifos = std::vector<std::vector<std::deque<FIFOValues>>>(num_PE_width, std::vector<std::deque<FIFOValues>>(num_PE_parallel, std::deque<FIFOValues>()));
     inputExpFifos = std::vector<std::vector<std::deque<int>>>(num_PE_width, std::vector<std::deque<int>>(num_PE_parallel, std::deque<int>()));
     weightValuesFifos = std::vector<std::vector<std::deque<FIFOValues>>> (num_PE_height, std::vector<std::deque<FIFOValues>>(num_PE_parallel, std::deque<FIFOValues>()));
-    weightExpFifos = std::vector<std::vector<std::deque<int>>>(num_PE_width, std::vector<std::deque<int>>(num_PE_parallel, std::deque<int>()));
+    weightExpFifos = std::vector<std::vector<std::deque<int>>>(num_PE_height, std::vector<std::deque<int>>(num_PE_parallel, std::deque<int>()));
 
     // convert input activation and weight to the bit format,
     // because we only need bit format value
@@ -61,6 +62,7 @@ namespace simulator
     inputControllerStatusForPEs = std::vector<PEControllerStatus>(num_PE_width);
     weightControllerStatusForPEs = std::vector<PEControllerStatus>(num_PE_height);
 
+    preDecodedInputs = v<DecodedRegister>(num_PE_width, DecodedRegister{v<v<unsigned int>>(num_PE_parallel, v<unsigned>(num_decodedRegister)), v<v<bool>>(num_PE_parallel, v<bool>(num_decodedRegister)), v<v<bool>>(num_PE_parallel, v<bool>(num_decodedRegister))});
     decodedInputs = v<DecodedRegister>(num_PE_width, DecodedRegister{v<v<unsigned int>>(num_PE_parallel, v<unsigned>(num_decodedRegister)), v<v<bool>>(num_PE_parallel, v<bool>(num_decodedRegister)), v<v<bool>>(num_PE_parallel, v<bool>(num_decodedRegister))});
     decodedWeights = v<DecodedRegister>(num_PE_height, DecodedRegister{v<v<unsigned int>>(num_PE_parallel, v<unsigned>(num_decodedRegister)), v<v<bool>>(num_PE_parallel, v<bool>(num_decodedRegister)), v<v<bool>>(num_PE_parallel, v<bool>(num_decodedRegister))});
 
@@ -84,13 +86,13 @@ namespace simulator
     }
 
     // decode values (this circuit always run) (just look at the first element and do not change fifo)
-    decodeValuesToBits(inputValuesFifos, decodedInputs);
+    decodeValuesToBits(inputValuesFifos, preDecodedInputs);
     decodeValuesToBits(weightValuesFifos, decodedWeights);
 
     // exp extraction
     // do not change fifo itself. change decodedInputs.
     // extract psumShiftWidth and shift bit position in corresponsindg decodedInputs
-    extractInputExpFromFifos(inputExpFifos, decodedInputs, sharedExpForInputs, psumShiftedWidths);
+    extractInputExpFromFifos(inputExpFifos, preDecodedInputs, decodedInputs, sharedExpForInputs, psumShiftedWidths);
 
     // etract weight exp
     extractWeightExpFromFifos(weightExpFifos, sharedExpForWeights);
@@ -127,7 +129,7 @@ namespace simulator
 
       // TODO: something wired might happen when 0 input
       // write the output of PEs to the corresponding output position
-      writeOutput(outputOfPEs, outputMemory, outputStatus, output_height, output_width, num_output_channel);
+      writeOutput(outputOfPEs, outputExpOfPEs, outputMemory, outputExpMemory, outputStatus, output_height, output_width, num_output_channel);
       outputStatus = outputStatus + 1;
 
       // update PE Status again to read next layers

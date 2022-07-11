@@ -680,11 +680,51 @@ namespace simulator
     }
   };
 
+  void writeOutput(
+    std::vector<std::vector<int>>& outputOfPEs,
+    std::vector<std::vector<int>>& outputExpOfPEs,
+    std::vector<std::vector<std::vector<int>>>& outputMemory,
+    std::vector<std::vector<std::vector<int>>>& outputExpMemory,
+    int outputStatus, // index of output, when first output, it is zero
+    int output_height,
+    int output_width,
+    int num_output_channel
+  )
+  {
+    for (int h = 0; h < num_PE_height; h++)
+    {
+      for (int w = 0; w < num_PE_width; w++){
+        // (for (w, h) in this particular group, group is divided into num_PE_width groups)
+        int thisGroupHeight = output_height / 2 + ((w / 2 == 0) ? output_height % 2 : 0);
+        int thisGroupWidth = output_width / 2 + ((w % 2 == 0) ? output_width % 2 : 0);
+        if (thisGroupHeight == 0 || thisGroupWidth == 0){
+          continue;
+        }
+
+        int outputChannelGroup = outputStatus / (thisGroupHeight * thisGroupWidth); // TODO: we might have strange thing if we have different timing for the end of output channel
+        int outputPositionIndex = outputStatus % (thisGroupHeight * thisGroupWidth);
+
+        int writeOutputChannel = h + num_PE_height * outputChannelGroup;
+
+        int writeOutputHeightPrefix = (w / 2 == 0) ? 0 : output_height - thisGroupHeight;
+        int writeOutputHeight = writeOutputHeightPrefix + outputPositionIndex / thisGroupWidth;
+
+        int writeOutputWidthPrefix = (w % 2 == 0) ? 0 : output_width - thisGroupWidth;
+        int writeOutputWidth = writeOutputWidthPrefix + outputPositionIndex % thisGroupWidth;
+        if (writeOutputChannel < num_output_channel && writeOutputHeight < output_height && writeOutputWidth < output_width){
+          outputMemory[writeOutputChannel][writeOutputHeight][writeOutputWidth] = outputOfPEs[h][w];
+          outputExpMemory[writeOutputChannel][writeOutputHeight][writeOutputWidth] = outputExpOfPEs[h][w];
+        }
+      }
+    }
+  };
+
   void extractInputExpFromFifos(
-    std::vector<std::vector<std::deque<int>>> inputExpFifos,
-    std::vector<DecodedRegister> decodedInputs,
-    std::vector<int> sharedExpForInputs,
-    std::vector<int> psumShiftedWidths
+    std::vector<std::vector<std::deque<int>>>& inputExpFifos,
+    std::vector<DecodedRegister>& preDecodedInputs,
+    std::vector<DecodedRegister>& decodedInputs,
+    std::vector<int>& sharedExpForInputs,
+    std::vector<int>& psumShiftedWidths
   )
   {
     for (int fifoIndex = 0; fifoIndex < num_PE_width; fifoIndex++){
@@ -707,9 +747,9 @@ namespace simulator
         for (int bitIndex = 0; bitIndex < num_decodedRegister; bitIndex++){
           int refIndex = bitIndex + shiftWidthForDecode;
           if (refIndex < num_decodedRegister){
-            decodedInputs[fifoIndex].bitInputValues[input_channel][bitIndex] = decodedInputs[fifoIndex].bitInputValues[input_channel][refIndex];
-            decodedInputs[fifoIndex].isNegatives[input_channel][bitIndex] = decodedInputs[fifoIndex].isNegatives[input_channel][refIndex];
-            decodedInputs[fifoIndex].isValids[input_channel][bitIndex] = decodedInputs[fifoIndex].isValids[input_channel][refIndex];
+            decodedInputs[fifoIndex].bitInputValues[input_channel][bitIndex] = preDecodedInputs[fifoIndex].bitInputValues[input_channel][refIndex];
+            decodedInputs[fifoIndex].isNegatives[input_channel][bitIndex] = preDecodedInputs[fifoIndex].isNegatives[input_channel][refIndex];
+            decodedInputs[fifoIndex].isValids[input_channel][bitIndex] = preDecodedInputs[fifoIndex].isValids[input_channel][refIndex];
           }
           else{
             decodedInputs[fifoIndex].bitInputValues[input_channel][bitIndex] = 0;
@@ -722,8 +762,8 @@ namespace simulator
   };
 
   void extractWeightExpFromFifos(
-    std::vector<std::vector<std::deque<int>>> weightExpFifos,
-    std::vector<int> sharedExpForWeights
+    std::vector<std::vector<std::deque<int>>>& weightExpFifos,
+    std::vector<int>& sharedExpForWeights
   )
   {
     // weightExpFifos is already quantized so we do not need to shift anything

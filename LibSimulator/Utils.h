@@ -165,16 +165,28 @@ namespace simulator
     int num_output_channel
   );
 
+  void writeOutput(
+    std::vector<std::vector<int>>& outputOfPEs,
+    std::vector<std::vector<int>>& outputExpOfPEs,
+    std::vector<std::vector<std::vector<int>>>& outputMemory,
+    std::vector<std::vector<std::vector<int>>>& outputExpMemory,
+    int outputStatus,
+    int output_height,
+    int output_width,
+    int num_output_channel
+  );
+
   void extractInputExpFromFifos(
-    std::vector<std::vector<std::deque<int>>> inputExpFifos,
-    std::vector<DecodedRegister> decodedInputs,
-    std::vector<int> sharedExpForInputs,
-    std::vector<int> psumShiftedWidths
+    std::vector<std::vector<std::deque<int>>>& inputExpFifos,
+    std::vector<DecodedRegister>& preDecodedInputs,
+    std::vector<DecodedRegister>& decodedInputs,
+    std::vector<int>& sharedExpForInputs,
+    std::vector<int>& psumShiftedWidths
   );
 
   void extractWeightExpFromFifos(
-    std::vector<std::vector<std::deque<int>>> weightExpFifos,
-    std::vector<int> sharedExpForWeights
+    std::vector<std::vector<std::deque<int>>>& weightExpFifos,
+    std::vector<int>& sharedExpForWeights
   );
 
 }
