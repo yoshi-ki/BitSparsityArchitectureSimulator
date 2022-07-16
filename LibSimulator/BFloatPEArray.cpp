@@ -86,8 +86,8 @@ namespace simulator
     }
 
     // decode values (this circuit always run) (just look at the first element and do not change fifo)
-    decodeValuesToBits(inputValuesFifos, preDecodedInputs);
-    decodeValuesToBits(weightValuesFifos, decodedWeights);
+    decodeValuesToBitsWithLeadingOne(inputValuesFifos, inputExpFifos, preDecodedInputs);
+    decodeValuesToBitsWithLeadingOne(weightValuesFifos, weightExpFifos, decodedWeights);
 
     // exp extraction
     // do not change fifo itself. change decodedInputs.

@@ -133,6 +133,12 @@ namespace simulator
     std::vector<DecodedRegister>& decodedRepresentations
   );
 
+  void decodeValuesToBitsWithLeadingOne(
+    std::vector<std::vector<std::deque<FIFOValues>>> &valueFifos,
+    std::vector<std::vector<std::deque<int>>> &expFifos,
+    std::vector<DecodedRegister>& decodedRepresentations
+  );
+
   void createInputForPEsBasedOnControllerStatus(
     std::vector<DecodedRegister>& decodedRegisters,
     std::vector<PEControllerStatus>& controllerStatusForPEs,

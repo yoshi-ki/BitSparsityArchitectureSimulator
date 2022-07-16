@@ -431,6 +431,57 @@ namespace simulator
     }
   };
 
+  void decodeValuesToBitsWithLeadingOne(
+    std::vector<std::vector<std::deque<FIFOValues>>>& valueFifos,
+    std::vector<std::vector<std::deque<int>>>& expFifos,
+    std::vector<DecodedRegister>& decodedRepresentations
+  )
+  {
+    for (int fifoIndex = 0; fifoIndex < valueFifos.size(); fifoIndex++){
+      for (int input_channel = 0; input_channel < num_PE_parallel; input_channel++){
+        if (valueFifos[fifoIndex][input_channel].size() == 0){
+          decodedRepresentations[fifoIndex].isValids[input_channel][0] = false;
+          continue;
+        }
+
+        int val = valueFifos[fifoIndex][input_channel].front().value;
+        int exp = expFifos[fifoIndex][input_channel].front();
+
+        // negative values transformation. considering future use, we set the isNegatives as vector
+        if (val >= 0){
+          for (int i = 0; i < 8; i++){
+            decodedRepresentations[fifoIndex].isNegatives[input_channel][i] = false;
+          }
+        }
+        else{
+          for (int i = 0; i < 8; i++){
+            decodedRepresentations[fifoIndex].isNegatives[input_channel][i] = true;
+          }
+          val = -val;
+        }
+
+        int bitVectorIndex = 0;
+        // i == 7 is 1 for mantissa in bfloat.
+        if (exp != 0 && val != 0){
+          decodedRepresentations[fifoIndex].bitInputValues[input_channel][bitVectorIndex] = (unsigned int)(7);
+          decodedRepresentations[fifoIndex].isValids[input_channel][bitVectorIndex] = true;
+          bitVectorIndex++;
+        }
+
+        for (int i = 6; i >= 0; i--)
+        {
+          int mask = 1 << i;
+          if ((val & mask) > 0)
+          {
+            decodedRepresentations[fifoIndex].bitInputValues[input_channel][bitVectorIndex] = (unsigned int)(i);
+            decodedRepresentations[fifoIndex].isValids[input_channel][bitVectorIndex] = true;
+            bitVectorIndex++;
+          }
+        }
+      }
+    }
+  };
+
   void createInputForPEsBasedOnControllerStatus(
     std::vector<DecodedRegister>& decodedRegisters,
     std::vector<PEControllerStatus>& controllerStatusForPEs,
