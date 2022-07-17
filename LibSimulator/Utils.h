@@ -62,6 +62,15 @@ namespace simulator
     int stride
   );
 
+  void computeConvFloat(
+    std::vector<std::vector<std::vector<int>>> &inputValues,
+    std::vector<std::vector<std::vector<int>>> &inputExpValues,
+    std::vector<std::vector<std::vector<std::vector<int>>>> &weightValues,
+    std::vector<std::vector<std::vector<std::vector<int>>>> &weightExpValues,
+    std::vector<std::vector<std::vector<float>>> &outputValues,
+    int stride
+  );
+
 
   // PE rray Utils functions
 
