@@ -64,6 +64,17 @@ namespace simulator::tests
     //     for (int output_width = 0; output_width < num_output_width; output_width++){
     //       // std::cout << outputValues[output_channel][output_height][output_width] << std::endl;
     //       // std::cout << "check real output" << std::endl;
+    //       ASSERT_THAT(peArray.outputMemory[output_channel][output_height][output_width], Eq(0)) << ("output_channel, output_height, output_width = " + std::to_string(output_channel) + " " + std::to_string(output_height) + " " + std::to_string(output_width));
+    //       ASSERT_THAT(peArray.outputExpMemory[output_channel][output_height][output_width], Eq(0)) << ("output_channel, output_height, output_width = " + std::to_string(output_channel) + " " + std::to_string(output_height) + " " + std::to_string(output_width));
+    //     }
+    //   }
+    // }
+
+    // for (int output_channel = 0; output_channel < num_output_channel; output_channel++){
+    //   for (int output_height = 0; output_height < num_output_height; output_height++){
+    //     for (int output_width = 0; output_width < num_output_width; output_width++){
+    //       // std::cout << outputValues[output_channel][output_height][output_width] << std::endl;
+    //       // std::cout << "check real output" << std::endl;
     //       ASSERT_THAT(peArray.outputMemory[output_channel][output_height][output_width], Eq(outputValues[output_channel][output_height][output_width])) << ("output_channel, output_height, output_width = " + std::to_string(output_channel) + " " + std::to_string(output_height) + " " + std::to_string(output_width));
     //     }
     //   }
@@ -155,6 +166,18 @@ namespace simulator::tests
     int stride=1;
     int num_output_channel=8;
     std::set<int> availableValueSet = {2};
+    BFloatExecOneLayer(num_input_channel, num_input_height, num_input_width, num_kernel_height, num_kernel_width, stride, num_output_channel, availableValueSet);
+  };
+
+  TEST(BFloatPEArrayTests, ExecuteMockConvWithZeroInput){
+    int num_input_channel=16;
+    int num_input_height=2;
+    int num_input_width=2;
+    int num_kernel_height=1;
+    int num_kernel_width=1;
+    int stride=1;
+    int num_output_channel=8;
+    std::set<int> availableValueSet = {0};
     BFloatExecOneLayer(num_input_channel, num_input_height, num_input_width, num_kernel_height, num_kernel_width, stride, num_output_channel, availableValueSet);
   };
 
