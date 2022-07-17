@@ -12,6 +12,61 @@ using namespace testing;
 
 namespace simulator::tests
 {
+  // Test for Bit Convertion (float <-> bfloat)
+  TEST(BFloatPEArrayTests, FloatToBFloat){
+    // +0 test
+    auto p = CreateBFloatFromFloat(0.f);
+    ASSERT_THAT(p.first, Eq(0)) << "should have zero exp";
+    ASSERT_THAT(p.second, Eq(0)) << "should have zero mantissa";
+
+    // -0 test
+    p = CreateBFloatFromFloat(-0.f);
+    ASSERT_THAT(p.first, Eq(0)) << "should have zero exp";
+    ASSERT_THAT(p.second, Eq(128)) << "should have 128 mantissa";
+
+    p = CreateBFloatFromFloat(2e+0);
+    ASSERT_THAT(p.first, Eq(128)) << "should have 128 exp";
+    ASSERT_THAT(p.second, Eq(0)) << "should have 0 mantissa";
+
+    p = CreateBFloatFromFloat(3e+0);
+    ASSERT_THAT(p.first, Eq(128)) << "should have 128 exp";
+    ASSERT_THAT(p.second, Eq(64)) << "should have 64 mantissa";
+
+    p = CreateBFloatFromFloat(-3e+0);
+    ASSERT_THAT(p.first, Eq(128)) << "should have 128 exp";
+    ASSERT_THAT(p.second, Eq(192)) << "should have 192 mantissa";
+
+    // rounding test
+    p = CreateBFloatFromFloat(2.0234375e+0); //0 10000000 00000011000000000000000
+    ASSERT_THAT(p.first, Eq(128)) << "should have 128 exp";
+    ASSERT_THAT(p.second, Eq(2)) << "should have 1 mantissa";
+
+    p = CreateBFloatFromFloat(2.0078125e+0); // 0 10000000 00000001000000000000000
+    ASSERT_THAT(p.first, Eq(128)) << "should have 128 exp";
+    ASSERT_THAT(p.second, Eq(0)) << "should have 0 mantissa";
+
+    p = CreateBFloatFromFloat(2.0078163146972656e+0); // 0 10000000 00000001000000000010000
+    ASSERT_THAT(p.first, Eq(128)) << "should have 128 exp";
+    ASSERT_THAT(p.second, Eq(1)) << "should have 1 mantissa";
+  };
+
+  TEST(BFloatPEArrayTests, BFloatToFloat){
+    float f = CreateFloatFromBFloat(std::make_pair(0, 0));
+    ASSERT_THAT(f, Eq(0.f));
+
+    f = CreateFloatFromBFloat(std::make_pair(0, 128));
+    ASSERT_THAT(f, Eq(-0.f));
+
+    f = CreateFloatFromBFloat(std::make_pair(128, 1)); // 0 10000000 0000001
+    ASSERT_THAT(f, Eq(2.015625e+0));
+
+    f = CreateFloatFromBFloat(std::make_pair(128, 129)); // 0 10000000 0000001
+    ASSERT_THAT(f, Eq(-2.015625e+0));
+
+    f = CreateFloatFromBFloat(std::make_pair(128, 65)); // 0 10000000 1000001
+    ASSERT_THAT(f, Eq(3.015625e+0));
+  };
+
   void BFloatExecOneLayer(
     int num_input_channel,
     int num_input_height,

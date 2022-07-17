@@ -823,4 +823,61 @@ namespace simulator
     }
   };
   #pragma endregion PEArrayUtils
+
+  #pragma BitConversion
+  std::pair<int,int> CreateBFloatFromFloat(float v){
+  union int_float{
+        uint32_t i;
+        float f;
+    } tofloat;
+
+  uint32_t input;
+  tofloat.f = v;
+  input = tofloat.i;
+  uint16_t output;
+
+  if (std::isnan(v)) {
+    // If the value is a NaN, squash it to a qNaN with msb of fraction set,
+    // this makes sure after truncation we don't end up with an inf.
+    //
+    // qNaN magic: All exponent bits set + most significant bit of fraction
+    // set.
+    output = 0x7fc0;
+  } else {
+    uint32_t lsb = (input >> 16) & 1;
+    uint32_t rounding_bias = 0x7fff + lsb;
+    input += rounding_bias;
+    output = static_cast<uint16_t>(input >> 16);
+  }
+  // output is bfloat, we will convert it to our format, exp and mantissa (manttisa includes sign)
+  int exp = (output >> 7) & 0b11111111;
+  int mantissa = (output & 0b1111111) + ((output >> 15) & 0b1) * 128;
+
+  // std::cout << std::bitset<16>(output) << " " << std::bitset<8>(exp) << " " << std::bitset<8>(mantissa) << std::endl;
+
+  return std::make_pair(exp, mantissa);
+}
+
+  float CreateFloatFromBFloat(std::pair<int,int> p){
+    // create float from bfloat
+    int exp = p.first;
+    int mantissa = p.second;
+    int exp2 = (exp & 0b11111111) + (mantissa >> 7 & 0b1) * 256;
+    uint8_t mantissa2 = (((uint8_t)mantissa) << 1);
+    mantissa2 = mantissa2 >> 1;
+    uint32_t target = (exp2 << 7 & 0b1111111110000000) + (uint32_t)mantissa2;
+    uint32_t target2 = target << 16;
+    union int_float{
+          uint32_t i;
+          float f;
+      } tofloat;
+    tofloat.i = target2;
+
+    // std::cout << std::bitset<32>(exp) << " " << std::bitset<8>(mantissa) << std::endl;
+    // std::cout << std::bitset<32>(exp2) << " " << std::bitset<8>(mantissa2) << std::endl;
+    // std::cout << std::bitset<32>(target) << " " << std::bitset<32>(target2) << std::endl;
+
+    return tofloat.f;
+  }
+  #pragma endregion BitConversion
 }

@@ -43,7 +43,7 @@ std::pair<int,int> CreateBFloatFromFloat(float v){
 }
 
 
-float CreateBFloatFromFloat(std::pair<int,int> p){
+float CreateFloatFromBFloat(std::pair<int,int> p){
   // create float from bfloat
   int exp = p.first;
   int mantissa = p.second;
@@ -221,7 +221,7 @@ int ExecNeuralNetwork(v<v<v<int>>>& inputExpValues, v<v<v<int>>>& inputMantissaV
   std::vector<float> scores = std::vector<float>(layerInputExpValues.size());
   for (int classIndex = 0; classIndex < layerInputExpValues.size(); classIndex++)
   {
-    float score = CreateBFloatFromFloat(std::make_pair(layerInputExpValues[classIndex][0][0], layerInputMantissaValues[classIndex][0][0]));
+    float score = CreateFloatFromBFloat(std::make_pair(layerInputExpValues[classIndex][0][0], layerInputMantissaValues[classIndex][0][0]));
     scores[classIndex] = score;
   }
   std::cout << scores << std::endl;

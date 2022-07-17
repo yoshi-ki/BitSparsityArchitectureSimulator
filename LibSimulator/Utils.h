@@ -195,4 +195,12 @@ namespace simulator
     std::vector<int>& sharedExpForWeights
   );
 
+
+
+
+
+
+  // Bit Conversion
+  std::pair<int,int> CreateBFloatFromFloat(float v);
+  float CreateFloatFromBFloat(std::pair<int, int> p);
 }
