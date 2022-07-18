@@ -37,6 +37,8 @@ namespace simulator
   std::pair<int,int> BFloatPE::get_psum(int inputExp, int weightExp)
   {
     // output bfloat values
-    return std::pair<int,int>{inputExp+weightExp, psum};
+    std::cout << inputExp << " " << weightExp << " " << psum << std::endl;
+    // TODO: shift mantissa part
+    return std::pair<int,int>{inputExp+weightExp-127, psum};
   }
 }
