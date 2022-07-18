@@ -136,8 +136,9 @@ namespace simulator
       for (int input_height = 0; input_height < num_input_height; input_height++){
         for (int input_width = 0; input_width < num_input_width; input_width++){
           inputFloatValues[input_channel][input_height][input_width] = CreateFloatFromBFloat(
-            std::make_pair(inputValues[input_channel][input_height][input_width], inputExpValues[input_channel][input_height][input_width])
+            std::make_pair(inputExpValues[input_channel][input_height][input_width], inputValues[input_channel][input_height][input_width])
           );
+          std::cout << inputFloatValues[input_channel][input_height][input_width] << std::endl;
         }
       }
     }
@@ -146,7 +147,7 @@ namespace simulator
         for (int kernel_height = 0; kernel_height < num_kernel_height; kernel_height++){
           for (int kernel_width = 0; kernel_width < num_kernel_width; kernel_width++){
             weightFloatValues[output_channel][input_channel][kernel_height][kernel_width] = CreateFloatFromBFloat(
-              std::make_pair(weightValues[output_channel][input_channel][kernel_height][kernel_width], weightExpValues[output_channel][input_channel][kernel_height][kernel_width])
+              std::make_pair(weightExpValues[output_channel][input_channel][kernel_height][kernel_width], weightValues[output_channel][input_channel][kernel_height][kernel_width])
             );
           }
         }
