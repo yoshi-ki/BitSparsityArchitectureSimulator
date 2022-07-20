@@ -1,16 +1,15 @@
 #pragma once
 #include <vector>
 #include "PEArray.h"
-#include "Utils.h"
 
 namespace simulator
 {
 
-  class PE
+  class BFloatPE
   {
     public:
       /* initializer */
-      PE();
+      BFloatPE();
 
       /* method */
       // execute one step and output psum
@@ -18,11 +17,12 @@ namespace simulator
       // output: 22bit signed
       int execute_one_step(
         PEInput bitActivations,
-        PEInput bitWeights
+        PEInput bitWeights,
+        int psumShiftedWidth
       );
 
       // output: 22bit signed
-      int get_psum();
+      std::pair<int,int> get_psum(int inputExp, int weightExp);
 
       // reset psum and other state for next iteration of PE
       void reset_state();
