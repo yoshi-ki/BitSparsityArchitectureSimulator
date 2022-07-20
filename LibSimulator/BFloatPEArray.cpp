@@ -122,8 +122,8 @@ namespace simulator
       {
         for (int w = 0; w < num_PE_width; w++){
           std::pair<int,int> p = BFloatPEs[h][w].get_psum(sharedExpForInputs[w],sharedExpForWeights[h]);
-          outputOfPEs[h][w] = p.first;
-          outputExpOfPEs[h][w] = p.second;
+          outputExpOfPEs[h][w] = p.first;
+          outputOfPEs[h][w] = p.second;
         }
       }
 

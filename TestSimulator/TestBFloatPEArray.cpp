@@ -122,6 +122,7 @@ namespace simulator::tests
           // std::cout << outputValues[output_channel][output_height][output_width] << std::endl;
           // std::cout << "check real output" << std::endl;
           float outFloat = CreateFloatFromBFloat(std::make_pair(peArray.outputExpMemory[output_channel][output_height][output_width], peArray.outputMemory[output_channel][output_height][output_width]));
+          std::cout << peArray.outputExpMemory[output_channel][output_height][output_width] << " " << peArray.outputMemory[output_channel][output_height][output_width] << std::endl;
           std::cout << outFloat << " " << outputValues[output_channel][output_height][output_width] << std::endl;
           EXPECT_TRUE(abs(outFloat - outputValues[output_channel][output_height][output_width]) < 0.1) << ("output_channel, output_height, output_width = " + std::to_string(output_channel) + " " + std::to_string(output_height) + " " + std::to_string(output_width));
         }
