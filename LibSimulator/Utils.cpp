@@ -138,7 +138,8 @@ namespace simulator
           inputFloatValues[input_channel][input_height][input_width] = CreateFloatFromBFloat(
             std::make_pair(inputExpValues[input_channel][input_height][input_width], inputValues[input_channel][input_height][input_width])
           );
-          std::cout << inputFloatValues[input_channel][input_height][input_width] << std::endl;
+          // std::cout << "create float from bfloat: " << inputExpValues[input_channel][input_height][input_width] << " " << inputValues[input_channel][input_height][input_width] << std::endl;
+          // std::cout << inputFloatValues[input_channel][input_height][input_width] << std::endl;
         }
       }
     }
@@ -851,6 +852,7 @@ namespace simulator
 
       int nowExp = sharedExpForInputs[fifoIndex];
       int shiftedWidth = maxExp - nowExp;
+      // std::cout << shiftedWidth << std::endl;
 
       sharedExpForInputs[fifoIndex] = maxExp;
       psumShiftedWidths[fifoIndex] = shiftedWidth;
@@ -860,18 +862,20 @@ namespace simulator
         int shiftWidthForDecode = maxExp - inputExpFifos[fifoIndex][input_channel].front();
         // shift decodedInputs[fifoIndex][input_channel] by shiftWidthForDecode bits
         for (int bitIndex = 0; bitIndex < num_decodedRegister; bitIndex++){
-          int refIndex = bitIndex + shiftWidthForDecode;
-          if (refIndex < num_decodedRegister){
-            decodedInputs[fifoIndex].bitInputValues[input_channel][bitIndex] = preDecodedInputs[fifoIndex].bitInputValues[input_channel][refIndex];
-            decodedInputs[fifoIndex].isNegatives[input_channel][bitIndex] = preDecodedInputs[fifoIndex].isNegatives[input_channel][refIndex];
-            decodedInputs[fifoIndex].isValids[input_channel][bitIndex] = preDecodedInputs[fifoIndex].isValids[input_channel][refIndex];
+          if (preDecodedInputs[fifoIndex].bitInputValues[input_channel][bitIndex] >= shiftWidthForDecode){
+            decodedInputs[fifoIndex].bitInputValues[input_channel][bitIndex] = preDecodedInputs[fifoIndex].bitInputValues[input_channel][bitIndex] - shiftWidthForDecode;
+            decodedInputs[fifoIndex].isNegatives[input_channel][bitIndex] = preDecodedInputs[fifoIndex].isNegatives[input_channel][bitIndex];
+            decodedInputs[fifoIndex].isValids[input_channel][bitIndex] = preDecodedInputs[fifoIndex].isValids[input_channel][bitIndex];
           }
           else{
             decodedInputs[fifoIndex].bitInputValues[input_channel][bitIndex] = 0;
             decodedInputs[fifoIndex].isNegatives[input_channel][bitIndex] = false;
             decodedInputs[fifoIndex].isValids[input_channel][bitIndex] = false;
           }
+          // std::cout << shiftWidthForDecode << " " << preDecodedInputs[fifoIndex].bitInputValues[input_channel][bitIndex] << " " << decodedInputs[fifoIndex].bitInputValues[input_channel][bitIndex] << std::endl;
         }
+        // std::cout << shiftWidthForDecode << " " << std::endl;
+        // std::cout << shiftWidthForDecode << " " << preDecodedInputs[fifoIndex].bitInputValues[input_channel] << " " << decodedInputs[fifoIndex].bitInputValues[input_channel] << std::endl;
       }
     }
   };
