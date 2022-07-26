@@ -163,6 +163,7 @@ namespace simulator
           for (int input_channel = 0; input_channel < num_input_channel; input_channel++){
             for (int kernel_height = 0; kernel_height < num_kernel_height; kernel_height++){
               for (int kernel_width = 0; kernel_width < num_kernel_width; kernel_width++){
+                // std::cout << "input: " << inputFloatValues[input_channel][output_height*stride + kernel_height][output_width*stride + kernel_width] << " weight: " << weightFloatValues[output_channel][input_channel][kernel_height][kernel_width] << std::endl;
                 outputValue +=
                   (inputFloatValues[input_channel][output_height*stride + kernel_height][output_width*stride + kernel_width] *
                     weightFloatValues[output_channel][input_channel][kernel_height][kernel_width]);
@@ -212,6 +213,10 @@ namespace simulator
                 for (int channelGroup = 0; channelGroup < num_input_channel_group; channelGroup++){
                   // input
                   for (int input_channel = 0; input_channel < num_PE_parallel; input_channel++){
+                    if (channelGroup == num_input_channel_group - 1 && channelGroup * num_PE_parallel + input_channel >= num_input_channel){
+                      // when last group and there are no values
+                      continue;
+                    }
                     inputValuesFifos[memoryIndex][input_channel].push_back(
                         FIFOValues{
                             inputMemories[memoryIndex][windowStartHeight + kh][windowStartWidth + kw][channelGroup][input_channel],
@@ -273,10 +278,18 @@ namespace simulator
                 for (int channelGroup = 0; channelGroup < num_input_channel_group; channelGroup++){
                   // input
                   for (int input_channel = 0; input_channel < num_PE_parallel; input_channel++){
+                    if (channelGroup == num_input_channel_group - 1 && channelGroup * num_PE_parallel + input_channel >= num_input_channel){
+                      // when last group and there are no values
+                      continue;
+                    }
                     inputValuesFifos[memoryIndex][input_channel].push_back(
                         FIFOValues{
                             inputMemories[memoryIndex][windowStartHeight + kh][windowStartWidth + kw][channelGroup][input_channel],
                             false});
+                    if (input_channel == 1){
+                      std::cout << memoryIndex << " " << windowStartHeight + kh << " " << windowStartWidth + kw << " " << channelGroup << std::endl;
+                      std::cout << inputMemories[memoryIndex][windowStartHeight + kh][windowStartWidth + kw][channelGroup][input_channel] << std::endl;
+                    }
                     inputExpFifos[memoryIndex][input_channel].push_back(inputExpMemories[memoryIndex][windowStartHeight + kh][windowStartWidth + kw][channelGroup][input_channel]);
                   }
                 }
@@ -331,6 +344,10 @@ namespace simulator
               for (int channelGroup = 0; channelGroup < num_input_channel_group; channelGroup++){
                 // input
                 for (int input_channel = 0; input_channel < num_PE_parallel; input_channel++){
+                  if (channelGroup == num_input_channel_group - 1 && channelGroup * num_PE_parallel + input_channel >= num_input_channel){
+                    // when last group and there are no values
+                    continue;
+                  }
                   weightValuesFifos[memoryIndex][input_channel].push_back(
                     FIFOValues{
                         weightMemories[memoryIndex][output_channel / num_PE_height][kh][kw][channelGroup][input_channel],
@@ -389,6 +406,10 @@ namespace simulator
               for (int channelGroup = 0; channelGroup < num_input_channel_group; channelGroup++){
                 // input
                 for (int input_channel = 0; input_channel < num_PE_parallel; input_channel++){
+                  if (channelGroup == num_input_channel_group - 1 && channelGroup * num_PE_parallel + input_channel >= num_input_channel){
+                    // when last group and there are no values
+                    continue;
+                  }
                   weightValuesFifos[memoryIndex][input_channel].push_back(
                     FIFOValues{
                         weightMemories[memoryIndex][output_channel / num_PE_height][kh][kw][channelGroup][input_channel],
@@ -513,7 +534,7 @@ namespace simulator
         int exp = expFifos[fifoIndex][input_channel].front();
 
         // negative values transformation. considering future use, we set the isNegatives as vector
-        if (val >= 0){
+        if (val < 128){
           for (int i = 0; i < 8; i++){
             decodedRepresentations[fifoIndex].isNegatives[input_channel][i] = false;
           }
@@ -522,12 +543,12 @@ namespace simulator
           for (int i = 0; i < 8; i++){
             decodedRepresentations[fifoIndex].isNegatives[input_channel][i] = true;
           }
-          val = -val;
+          val = -128;
         }
 
         int bitVectorIndex = 0;
         // i == 7 is 1 for mantissa in bfloat.
-        if (exp != 0 && val != 0){
+        if (exp != 0 || val != 0){
           decodedRepresentations[fifoIndex].bitInputValues[input_channel][bitVectorIndex] = (unsigned int)(7);
           decodedRepresentations[fifoIndex].isValids[input_channel][bitVectorIndex] = true;
           bitVectorIndex++;
@@ -862,7 +883,7 @@ namespace simulator
         int shiftWidthForDecode = maxExp - inputExpFifos[fifoIndex][input_channel].front();
         // shift decodedInputs[fifoIndex][input_channel] by shiftWidthForDecode bits
         for (int bitIndex = 0; bitIndex < num_decodedRegister; bitIndex++){
-          if (preDecodedInputs[fifoIndex].bitInputValues[input_channel][bitIndex] >= shiftWidthForDecode){
+          if (preDecodedInputs[fifoIndex].isValids[input_channel][bitIndex] && preDecodedInputs[fifoIndex].bitInputValues[input_channel][bitIndex] >= shiftWidthForDecode){
             decodedInputs[fifoIndex].bitInputValues[input_channel][bitIndex] = preDecodedInputs[fifoIndex].bitInputValues[input_channel][bitIndex] - shiftWidthForDecode;
             decodedInputs[fifoIndex].isNegatives[input_channel][bitIndex] = preDecodedInputs[fifoIndex].isNegatives[input_channel][bitIndex];
             decodedInputs[fifoIndex].isValids[input_channel][bitIndex] = preDecodedInputs[fifoIndex].isValids[input_channel][bitIndex];
