@@ -204,7 +204,7 @@ namespace simulator::tests
     int num_kernel_width=1;
     int stride=1;
     int num_output_channel=1;
-    std::set<int> availableValueSet = {64,128};
+    std::set<int> availableValueSet = {32,64,96};
     std::set<int> availableExpValueSet = {128};
     BFloatExecOneLayer(num_input_channel, num_input_height, num_input_width, num_kernel_height, num_kernel_width, stride, num_output_channel, availableValueSet, availableExpValueSet);
   };

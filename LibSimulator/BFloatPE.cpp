@@ -52,6 +52,7 @@ namespace simulator
     }
     if (psum != 0){
       std::cout <<  std::bitset<25>(psum) << std::endl;
+      std::cout <<  std::bitset<25>(-psum) << std::endl;
     }
     return psum;
   }

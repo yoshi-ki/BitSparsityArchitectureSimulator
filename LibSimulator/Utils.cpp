@@ -286,10 +286,10 @@ namespace simulator
                         FIFOValues{
                             inputMemories[memoryIndex][windowStartHeight + kh][windowStartWidth + kw][channelGroup][input_channel],
                             false});
-                    if (input_channel == 1){
-                      std::cout << memoryIndex << " " << windowStartHeight + kh << " " << windowStartWidth + kw << " " << channelGroup << std::endl;
-                      std::cout << inputMemories[memoryIndex][windowStartHeight + kh][windowStartWidth + kw][channelGroup][input_channel] << std::endl;
-                    }
+                    // if (input_channel == 0){
+                    //   std::cout << memoryIndex << " " << windowStartHeight + kh << " " << windowStartWidth + kw << " " << channelGroup << std::endl;
+                    //   std::cout << inputMemories[memoryIndex][windowStartHeight + kh][windowStartWidth + kw][channelGroup][input_channel] << std::endl;
+                    // }
                     inputExpFifos[memoryIndex][input_channel].push_back(inputExpMemories[memoryIndex][windowStartHeight + kh][windowStartWidth + kw][channelGroup][input_channel]);
                   }
                 }
@@ -563,6 +563,10 @@ namespace simulator
             decodedRepresentations[fifoIndex].isValids[input_channel][bitVectorIndex] = true;
             bitVectorIndex++;
           }
+        }
+
+        for (int i = bitVectorIndex; i < 8; i++){
+          decodedRepresentations[fifoIndex].isValids[input_channel][bitVectorIndex] = false;
         }
       }
     }
@@ -887,6 +891,7 @@ namespace simulator
             decodedInputs[fifoIndex].bitInputValues[input_channel][bitIndex] = preDecodedInputs[fifoIndex].bitInputValues[input_channel][bitIndex] - shiftWidthForDecode;
             decodedInputs[fifoIndex].isNegatives[input_channel][bitIndex] = preDecodedInputs[fifoIndex].isNegatives[input_channel][bitIndex];
             decodedInputs[fifoIndex].isValids[input_channel][bitIndex] = preDecodedInputs[fifoIndex].isValids[input_channel][bitIndex];
+            // std::cout << decodedInputs[fifoIndex].bitInputValues[input_channel][bitIndex] << std::endl;
           }
           else{
             decodedInputs[fifoIndex].bitInputValues[input_channel][bitIndex] = 0;

@@ -142,6 +142,22 @@ namespace simulator
           BFloatPEs[h][w].reset_state();
         }
       }
+
+      // // reset decoded inputs and decoded weights
+      // for (int inputFifoIndex = 0; inputFifoIndex < num_PE_width; inputFifoIndex++){
+      //   for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
+      //     for (int i = 0; i < 8; i++){
+      //       decodedInputs[inputFifoIndex].isValids[bitIndex][i] = false;
+      //     }
+      //   }
+      // }
+      // for (int weightFifoIndex = 0; weightFifoIndex < num_PE_width; weightFifoIndex++){
+      //   for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
+      //     for (int i = 0; i < 8; i++){
+      //       decodedWeights[weightFifoIndex].isValids[bitIndex][i] = false;
+      //     }
+      //   }
+      // }
     }
     return busy;
   };
