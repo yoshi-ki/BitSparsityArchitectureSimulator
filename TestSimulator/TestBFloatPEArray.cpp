@@ -209,6 +209,19 @@ namespace simulator::tests
     BFloatExecOneLayer(num_input_channel, num_input_height, num_input_width, num_kernel_height, num_kernel_width, stride, num_output_channel, availableValueSet, availableExpValueSet);
   };
 
+  TEST(BFloatPEArrayTests, ExecuteMockConvSuperEasyTestExp){
+    int num_input_channel=17;
+    int num_input_height=1;
+    int num_input_width=1;
+    int num_kernel_height=1;
+    int num_kernel_width=1;
+    int stride=1;
+    int num_output_channel=1;
+    std::set<int> availableValueSet = {128};
+    std::set<int> availableExpValueSet = {128,129};
+    BFloatExecOneLayer(num_input_channel, num_input_height, num_input_width, num_kernel_height, num_kernel_width, stride, num_output_channel, availableValueSet, availableExpValueSet);
+  };
+
   TEST(BFloatPEArrayTests, ExecuteMockConvInputChannel10){
     int num_input_channel=10;
     int num_input_height=2;

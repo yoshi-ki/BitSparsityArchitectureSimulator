@@ -30,6 +30,7 @@ namespace simulator
         std::cout << bitWeights.bitInputValue.at(i) << " " <<  bitWeights.isValid.at(i) << " " << bitWeights.isNegative.at(i) << "; ";
       }
       std::cout << std::endl;
+      std::cout << "psumShiftedWidth: " << psumShiftedWidth << std::endl;
     }
 
     // if (psumShiftedWidth != 0){
