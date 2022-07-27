@@ -21,17 +21,17 @@ namespace simulator
     int psumShiftedWidth
   )
   {
-    if (psum != 0){
-      for (size_t i = 0; i < bitActivations.bitInputValue.size(); ++i) {
-        std::cout << bitActivations.bitInputValue.at(i) << " " <<  bitActivations.isValid.at(i) << " " << bitActivations.isNegative.at(i) << "; ";
-      }
-      std::cout << std::endl;
-      for (size_t i = 0; i < bitWeights.bitInputValue.size(); ++i) {
-        std::cout << bitWeights.bitInputValue.at(i) << " " <<  bitWeights.isValid.at(i) << " " << bitWeights.isNegative.at(i) << "; ";
-      }
-      std::cout << std::endl;
-      std::cout << "psumShiftedWidth: " << psumShiftedWidth << std::endl;
-    }
+    // if (psum != 0){
+    //   for (size_t i = 0; i < bitActivations.bitInputValue.size(); ++i) {
+    //     std::cout << bitActivations.bitInputValue.at(i) << " " <<  bitActivations.isValid.at(i) << " " << bitActivations.isNegative.at(i) << "; ";
+    //   }
+    //   std::cout << std::endl;
+    //   for (size_t i = 0; i < bitWeights.bitInputValue.size(); ++i) {
+    //     std::cout << bitWeights.bitInputValue.at(i) << " " <<  bitWeights.isValid.at(i) << " " << bitWeights.isNegative.at(i) << "; ";
+    //   }
+    //   std::cout << std::endl;
+    //   std::cout << "psumShiftedWidth: " << psumShiftedWidth << std::endl;
+    // }
 
     // if (psumShiftedWidth != 0){
     //   std::cout << psum << std::endl;
@@ -51,10 +51,10 @@ namespace simulator
         psum += multIsNegative ? (-(1 << multExp)) : (1 << multExp);
       }
     }
-    if (psum != 0){
-      std::cout <<  std::bitset<25>(psum) << std::endl;
-      std::cout <<  std::bitset<25>(-psum) << std::endl;
-    }
+    // if (psum != 0){
+    //   std::cout <<  std::bitset<25>(psum) << std::endl;
+    //   std::cout <<  std::bitset<25>(-psum) << std::endl;
+    // }
     return psum;
   }
 
