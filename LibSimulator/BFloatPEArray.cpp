@@ -85,6 +85,7 @@ namespace simulator
       return busy;
     }
 
+
     // decode values (this circuit always run) (just look at the first element and do not change fifo)
     decodeValuesToBitsWithLeadingOne(inputValuesFifos, inputExpFifos, preDecodedInputs);
     decodeValuesToBitsWithLeadingOne(weightValuesFifos, weightExpFifos, decodedWeights);
@@ -110,7 +111,7 @@ namespace simulator
     }
 
     // update pe status
-    updatePEStatus(inputControllerStatusForPEs, weightControllerStatusForPEs, inputValuesFifos, weightValuesFifos, decodedInputs, decodedWeights);
+    updatePEStatus(inputControllerStatusForPEs, weightControllerStatusForPEs, inputValuesFifos, inputExpFifos, weightValuesFifos, weightExpFifos, decodedInputs, decodedWeights);
 
     bool finishedPsumExecution = isFinishedPSumExecution(inputControllerStatusForPEs, weightControllerStatusForPEs);
 
@@ -134,7 +135,7 @@ namespace simulator
 
       // update PE Status again to read next layers
       // finishedPSum -> false, isWaiting -> false, index -> 0, pop fifo
-      updatePEStatusWhenPsumFinish(inputControllerStatusForPEs, weightControllerStatusForPEs, inputValuesFifos, weightValuesFifos);
+      updatePEStatusWhenPsumFinish(inputControllerStatusForPEs, weightControllerStatusForPEs, inputValuesFifos, inputExpFifos, weightValuesFifos, weightExpFifos);
 
       // reset state inside PE
       for (int h = 0; h < num_PE_height; h++){
@@ -142,6 +143,22 @@ namespace simulator
           BFloatPEs[h][w].reset_state();
         }
       }
+
+      // // reset decoded inputs and decoded weights
+      // for (int inputFifoIndex = 0; inputFifoIndex < num_PE_width; inputFifoIndex++){
+      //   for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
+      //     for (int i = 0; i < 8; i++){
+      //       decodedInputs[inputFifoIndex].isValids[bitIndex][i] = false;
+      //     }
+      //   }
+      // }
+      // for (int weightFifoIndex = 0; weightFifoIndex < num_PE_width; weightFifoIndex++){
+      //   for (int bitIndex = 0; bitIndex < num_PE_parallel; bitIndex++){
+      //     for (int i = 0; i < 8; i++){
+      //       decodedWeights[weightFifoIndex].isValids[bitIndex][i] = false;
+      //     }
+      //   }
+      // }
     }
     return busy;
   };

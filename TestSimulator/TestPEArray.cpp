@@ -126,7 +126,19 @@ namespace simulator::tests
     int num_kernel_width=1;
     int stride=1;
     int num_output_channel=32;
-    std::set<int> availableValueSet = {2};
+    std::set<int> availableValueSet = {64,63};
+    ExecOneLayer(num_input_channel, num_input_height, num_input_width, num_kernel_height, num_kernel_width, stride, num_output_channel, availableValueSet);
+  };
+
+  TEST(PEArrayTests, ExecuteMockConvManyInputOutput32_2){
+    int num_input_channel=32;
+    int num_input_height=2;
+    int num_input_width=2;
+    int num_kernel_height=1;
+    int num_kernel_width=1;
+    int stride=1;
+    int num_output_channel=32;
+    std::set<int> availableValueSet = {64,32,96,34,55};
     ExecOneLayer(num_input_channel, num_input_height, num_input_width, num_kernel_height, num_kernel_width, stride, num_output_channel, availableValueSet);
   };
 
@@ -186,7 +198,7 @@ namespace simulator::tests
     int num_kernel_width=1;
     int stride=1;
     int num_output_channel=4096;
-    std::set<int> availableValueSet = {2};
+    std::set<int> availableValueSet = {2,3,5};
     ExecOneLayer(num_input_channel, num_input_height, num_input_width, num_kernel_height, num_kernel_width, stride, num_output_channel, availableValueSet);
   };
   #pragma endregion

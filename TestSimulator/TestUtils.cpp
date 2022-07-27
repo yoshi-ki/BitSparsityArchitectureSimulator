@@ -58,7 +58,7 @@ namespace simulator::tests
           for (int kernel_width = 0; kernel_width < num_kernel_width; kernel_width++){
             // weightValues[output_channel][input_channel][kernel_height][kernel_width] = rand() % setSize;
             weightValues[output_channel][input_channel][kernel_height][kernel_width] = *std::next(availableValueSet.begin(), rand()%setSize);
-            // weightValues[output_channel][input_channel][kernel_height][kernel_width] = 2;
+            // weightValues[output_channel][input_channel][kernel_height][kernel_width] = 128;
           }
         }
       }

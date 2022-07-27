@@ -164,11 +164,31 @@ namespace simulator
     std::vector<DecodedRegister> &decodedWeights
   );
 
+  void updatePEStatus(
+    std::vector<PEControllerStatus> &inputControllerStatusForPEs,
+    std::vector<PEControllerStatus> &weightControllerStatusForPEs,
+    std::vector<std::vector<std::deque<FIFOValues>>> &inputValuesFifos,
+    std::vector<std::vector<std::deque<int>>> &inputExpFifos,
+    std::vector<std::vector<std::deque<FIFOValues>>> &weightValuesFifos,
+    std::vector<std::vector<std::deque<int>>> &weightExpFifos,
+    std::vector<DecodedRegister> &decodedInputs,
+    std::vector<DecodedRegister> &decodedWeights
+  );
+
   void updatePEStatusWhenPsumFinish(
     std::vector<PEControllerStatus> & inputControllerStatusForPEs,
     std::vector<PEControllerStatus> & weightControllerStatusForPEs,
     std::vector<std::vector<std::deque<FIFOValues>>> & inputValuesFifos,
     std::vector<std::vector<std::deque<FIFOValues>>> & weightValuesFifos
+  );
+
+  void updatePEStatusWhenPsumFinish(
+    std::vector<PEControllerStatus> & inputControllerStatusForPEs,
+    std::vector<PEControllerStatus> & weightControllerStatusForPEs,
+    std::vector<std::vector<std::deque<FIFOValues>>> & inputValuesFifos,
+    std::vector<std::vector<std::deque<int>>> & inputExpFifos,
+    std::vector<std::vector<std::deque<FIFOValues>>> & weightValuesFifos,
+    std::vector<std::vector<std::deque<int>>> & weightExpFifos
   );
 
   void writeOutput(
