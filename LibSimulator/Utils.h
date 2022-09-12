@@ -62,6 +62,14 @@ namespace simulator
     int stride
   );
 
+  void computeConvWithApprox(
+    std::vector<std::vector<std::vector<int>>> &inputValues,
+    std::vector<std::vector<std::vector<std::vector<int>>>> &weightValues,
+    std::vector<std::vector<std::vector<int>>> &outputValues,
+    int stride,
+    int approxThreshold
+  );
+
   void computeConvFloat(
     std::vector<std::vector<std::vector<int>>> &inputValues,
     std::vector<std::vector<std::vector<int>>> &inputExpValues,
